@@ -22,7 +22,7 @@ function Broadcast() {
   const now = s.news.find((n) => n.id === s.nowPlaying);
   const idx = sources.findIndex(([k]) => k === s.source);
   return (
-    <main className="mx-auto grid max-w-[1400px] gap-4 px-4 py-6 lg:grid-cols-[2fr_1fr]">
+    <main className="mx-auto grid max-w-[1400px] gap-4 px-3 py-4 sm:px-4 sm:py-6 lg:grid-cols-[2fr_1fr]">
       <Glass red className="space-y-3 p-4">
         <div className="flex items-center justify-between"><h1 className="font-bold">Master Control</h1>{s.onAir && <LiveDot label="ON AIR" />}</div>
         <div className="relative overflow-hidden rounded-xl">

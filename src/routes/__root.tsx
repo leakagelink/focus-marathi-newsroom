@@ -41,7 +41,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+      { name: "theme-color", content: "#08090D" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "FOCUS 24" },
       { title: "FOCUS 24 NEWS मराठी" },
       { name: "description", content: "Maharashtra's Digital News Network" },
       { property: "og:type", content: "website" },
@@ -52,6 +57,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap" },
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
     ],
   }),
   shellComponent: RootShell,
@@ -86,30 +92,30 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <header className="sticky top-0 z-50 border-b border-glass-border bg-background/70 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-3 px-4 py-2.5">
-          <Link to="/"><Logo size="sm" /></Link>
-          <nav className="flex flex-1 flex-wrap justify-center gap-1.5">
+        <div className="mx-auto flex h-13 max-w-[1600px] items-center gap-2 px-2 pt-[env(safe-area-inset-top)] sm:gap-3 sm:px-4">
+          <Link to="/" className="hidden shrink-0 sm:block"><Logo size="sm" /></Link>
+          <nav className="flex min-w-0 flex-1 gap-1 overflow-x-auto [scrollbar-width:none] sm:justify-center sm:gap-1.5">
             {views.map((v) => (
               <Link key={v.to} to={v.to} activeOptions={{ exact: true }}
-                className="flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
+                className="flex shrink-0 items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-[11px] sm:gap-2 sm:px-3 sm:text-xs text-muted-foreground transition hover:text-foreground"
                 activeProps={{ className: "glass-red !text-foreground" }}>
                 <v.icon className="size-4" />
-                <span className="font-semibold">{v.label}</span>
+                <span className="font-semibold">{v.label.split(" ")[0]}<span className="hidden sm:inline"> {v.label.split(" ").slice(1).join(" ")}</span></span>
                 <span className="hidden text-faint lg:inline">({v.sub})</span>
               </Link>
             ))}
           </nav>
-          <label className="flex items-center gap-2 text-xs text-muted-foreground">
-            Demo Role
+          <label className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
+            <span className="hidden md:inline">Demo Role</span>
             <select value={role} onChange={(e) => actions.setRole(e.target.value as Role)}
-              className="rounded-lg glass bg-card px-2 py-1 text-xs text-foreground">
+              className="w-20 rounded-lg glass bg-card px-1.5 py-1 text-xs text-foreground sm:w-auto">
               {roles.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
             </select>
           </label>
         </div>
       </header>
       <Outlet />
-      <Toaster theme="dark" position="top-right" richColors />
+      <Toaster theme="dark" position="top-center" richColors />
     </QueryClientProvider>
   );
 }

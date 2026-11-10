@@ -13,9 +13,9 @@ export const Route = createFileRoute("/journalist")({
     ],
   }),
   component: () => (
-    <main className="mx-auto flex max-w-[1200px] flex-col items-center gap-8 px-4 py-8 lg:flex-row lg:items-start lg:justify-center">
+    <main className="mx-auto flex max-w-[1200px] flex-col items-center gap-8 md:px-4 md:py-8 lg:flex-row lg:items-start lg:justify-center">
       <PhoneFrame><div className="relative h-full"><JournalistApp /></div></PhoneFrame>
-      <Glass className="max-w-sm space-y-2 p-5 text-sm">
+      <Glass className="hidden max-w-sm space-y-2 p-5 text-sm md:block">
         <h2 className="text-lg font-bold">डेमो सूचना</h2>
         <ol className="list-decimal space-y-1 pl-5 text-muted-foreground">
           <li>OTP पाठवा → <b className="text-foreground">1234</b> टाका.</li>

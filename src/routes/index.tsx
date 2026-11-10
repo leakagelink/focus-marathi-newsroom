@@ -25,9 +25,9 @@ const flow = [
 
 function Index() {
   return (
-    <main className="mx-auto flex max-w-[1400px] flex-col items-center gap-10 px-4 py-8 lg:flex-row lg:items-start lg:justify-center">
+    <main className="mx-auto flex max-w-[1400px] flex-col items-center gap-10 md:px-4 md:py-8 lg:flex-row lg:items-start lg:justify-center">
       <PhoneFrame><PublicApp /></PhoneFrame>
-      <div className="max-w-md space-y-5 lg:pt-10">
+      <div className="hidden max-w-md space-y-5 md:block lg:pt-10">
         <Logo size="lg" />
         <p className="text-xs font-semibold tracking-[0.3em] text-muted-foreground">MAHARASHTRA'S DIGITAL NEWS NETWORK</p>
         <h1 className="text-2xl font-bold leading-snug">36 जिल्हे · 288 विधानसभा · एक डिजिटल न्यूज नेटवर्क</h1>
