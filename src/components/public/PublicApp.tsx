@@ -54,7 +54,8 @@ export function PublicApp() {
   if (open) return <Detail n={open} onBack={() => setOpen(null)} adName={ads[0]?.advertiser} />;
 
   return (
-    <div className="relative min-h-full pb-20">
+    <div className="relative flex min-h-full flex-col">
+      <div className="flex-1 pb-4">
       <div className="flex items-center justify-between px-4 py-2">
         {tab !== "Home" || history.length > 0 ? (
           <button onClick={back} aria-label="मागें" title="मागें" className="glass grid size-8 shrink-0 place-items-center rounded-xl text-muted-foreground transition hover:border-primary/50 hover:text-foreground active:scale-95"><ArrowLeft className="size-4" /></button>
@@ -118,11 +119,12 @@ export function PublicApp() {
         </div>
       )}
 
-      <div className="fixed bottom-0 inset-x-0 z-30 flex justify-around border-t border-glass-border bg-card/90 py-2 text-[10px] backdrop-blur">
+      </div>
+      <nav className="sticky bottom-0 z-30 flex justify-around border-t border-glass-border bg-card/95 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 text-[10px] backdrop-blur">
         {[{ i: Home, l: "Home" }, { i: Tv, l: "Live TV" }, { i: Play, l: "Shorts" }, { i: Building2, l: "जिल्हे" }, { i: UserRound, l: "Profile" }].map(({ i: I, l }) => (
           <button key={l} onClick={() => go(l === "Shorts" ? "superfast" : l === "Profile" ? "Home" : l)} className={`flex flex-col items-center gap-0.5 ${tab === l ? "text-neon" : "text-muted-foreground"}`}><I className="size-5" />{l}</button>
         ))}
-      </div>
+      </nav>
     </div>
   );
 }

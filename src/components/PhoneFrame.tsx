@@ -9,7 +9,7 @@ export function PhoneFrame({ children }: { children: ReactNode }) {
         <div className="hidden h-10 items-center justify-between px-7 pt-1 text-xs font-semibold md:flex">
           <span>9:41</span><span>5G ▮▮▮</span>
         </div>
-        <div className="h-full overflow-y-auto overscroll-contain pb-[env(safe-area-inset-bottom)] md:h-[calc(100%-2.5rem)]">{children}</div>
+        <div className="h-full overflow-y-auto overscroll-contain md:h-[calc(100%-2.5rem)]">{children}</div>
       </div>
     </div>
   );

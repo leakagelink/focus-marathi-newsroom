@@ -32,7 +32,8 @@ export function JournalistApp() {
     else setAuthed(false);
   };
   return (
-    <div className="space-y-3 px-3 pb-24">
+    <div className="flex min-h-full flex-col">
+      <div className="flex-1 space-y-3 px-3 pb-4">
       <div className="flex items-center gap-2 py-1">
         <button onClick={back} aria-label="मागें" title="मागें" className="glass grid size-8 shrink-0 place-items-center rounded-xl text-muted-foreground transition hover:border-primary/50 hover:text-foreground active:scale-95"><ArrowLeft className="size-4" /></button>
         <h2 className="flex-1 text-center font-bold">पत्रकार पोर्टल</h2>
@@ -54,11 +55,12 @@ export function JournalistApp() {
       {tab === "upload" && <UploadForm onDone={() => setTab("list")} />}
       {tab === "list" && <MyUploads />}
       {tab === "earn" && <Earnings />}
-      <div className="fixed bottom-0 inset-x-0 z-30 flex justify-around border-t border-glass-border bg-card/95 py-2 text-[10px] backdrop-blur">
+      </div>
+      <nav className="sticky bottom-0 z-30 flex justify-around border-t border-glass-border bg-card/95 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 text-[10px] backdrop-blur">
         {([["upload", CloudUpload, "अपलोड"], ["list", ListChecks, "माझे अपलोड"], ["earn", Wallet, "कमाई"]] as const).map(([k, I, l]) => (
           <button key={k} onClick={() => go(k)} className={`flex flex-col items-center gap-0.5 ${tab === k ? "text-neon" : "text-muted-foreground"}`}><I className="size-5" />{l}</button>
         ))}
-      </div>
+      </nav>
     </div>
   );
 }
