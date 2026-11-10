@@ -98,17 +98,17 @@ function RootComponent() {
   const showBack = pathname !== "/" || (mounted && canGoBack());
   return (
     <QueryClientProvider client={queryClient}>
-      <header className="sticky top-0 z-50 border-b border-glass-border bg-background/70 backdrop-blur-xl">
-        <div className="mx-auto flex h-13 max-w-[1600px] items-center gap-2 px-2 pt-[env(safe-area-inset-top)] sm:gap-3 sm:px-4">
+      <header className="sticky top-0 z-50 border-b border-glass-border bg-background/90 pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] backdrop-blur-xl">
+        <div className="mx-auto flex min-h-13 max-w-[1600px] items-center gap-1.5 px-2 py-1.5 sm:gap-3 sm:px-4">
           {showBack && <BackButton iconOnly className="size-8 shrink-0" />}
           <Link to="/" className="hidden shrink-0 sm:block"><Logo size="sm" /></Link>
-          <nav className="flex min-w-0 flex-1 gap-1 overflow-x-auto [scrollbar-width:none] sm:justify-center sm:gap-1.5">
+          <nav className="grid min-w-0 flex-1 grid-cols-4 gap-1 sm:flex sm:justify-center sm:gap-1.5">
             {views.map((v) => (
               <Link key={v.to} to={v.to} activeOptions={{ exact: true }}
-                className="flex shrink-0 items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-[11px] sm:gap-2 sm:px-3 sm:text-xs text-muted-foreground transition hover:text-foreground"
+                className="flex min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1 text-[10px] leading-tight sm:shrink-0 sm:flex-row sm:gap-2 sm:px-3 sm:py-1.5 sm:text-xs text-muted-foreground transition hover:text-foreground"
                 activeProps={{ className: "glass-red !text-foreground" }}>
-                <v.icon className="size-4" />
-                <span className="font-semibold">{v.label.split(" ")[0]}<span className="hidden sm:inline"> {v.label.split(" ").slice(1).join(" ")}</span></span>
+                <v.icon className="size-4 shrink-0" />
+                <span className="max-w-full truncate font-semibold">{v.label.split(" ")[0] === "Broadcast" ? <><span className="sm:hidden">Live</span><span className="hidden sm:inline">Broadcast</span></> : v.label.split(" ")[0]}<span className="hidden sm:inline"> {v.label.split(" ").slice(1).join(" ")}</span></span>
                 <span className="hidden text-faint lg:inline">({v.sub})</span>
               </Link>
             ))}
@@ -116,7 +116,7 @@ function RootComponent() {
           <label className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
             <span className="hidden md:inline">Demo Role</span>
             <select value={role} onChange={(e) => actions.setRole(e.target.value as Role)}
-              className="w-20 rounded-lg glass bg-card px-1.5 py-1 text-xs text-foreground sm:w-auto">
+              aria-label="Demo Role" className="w-16 rounded-lg glass bg-card px-1 py-1 text-[11px] sm:w-auto sm:px-1.5 sm:text-xs text-foreground sm:w-auto">
               {roles.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
             </select>
           </label>
