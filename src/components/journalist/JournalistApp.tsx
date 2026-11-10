@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { CheckCircle2, CloudUpload, Loader2, Play, Upload, Wallet, X, FileVideo, ListChecks } from "lucide-react";
+import { ArrowLeft, CheckCircle2, CloudUpload, Loader2, Play, Upload, Wallet, X, FileVideo, ListChecks } from "lucide-react";
 import { toast } from "sonner";
 import { Glass, GlowButton, Logo, Pill, inputCls } from "@/components/ui/glass";
 import { actions, earnings, useStore } from "@/lib/store";
@@ -14,16 +14,17 @@ const CLIPS: { k: ClipType; t: string; d: string; sec: string }[] = [
   { k: "byte2", t: "Second Byte", d: "60 सेकंद", sec: "1:00" },
 ];
 const ME = "j1";
+type JTab = "upload" | "list" | "earn";
 
 export function JournalistApp() {
   const [authed, setAuthed] = useState(false);
-  const [tab, setTab] = useState<"upload" | "list" | "earn">("upload");
-  const [history, setHistory] = useState<"upload" | "list" | "earn">[]>([]);
+  const [tab, setTab] = useState<JTab>("upload");
+  const [history, setHistory] = useState<JTab[]>([]);
   const me = useStore((s) => s.journalists.find((j) => j.id === ME)!);
   const mine = useStore((s) => s.news.filter((n) => n.reporterId === ME));
   if (!authed) return <Login onDone={() => setAuthed(true)} />;
   // In-app back: previous section first, and the login screen once at the start.
-  const go = (k: "upload" | "list" | "earn") => { setHistory((h) => [...h, tab]); setTab(k); };
+  const go = (k: JTab) => { setHistory((h) => [...h, tab]); setTab(k); };
   const back = () => {
     const prev = history.at(-1);
     setHistory((h) => h.slice(0, -1));

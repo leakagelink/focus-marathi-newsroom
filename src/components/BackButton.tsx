@@ -29,7 +29,7 @@ export function useGoBack() {
 }
 
 export function BackButton({
-  label = "मागे",
+  label = "मागें",
   iconOnly = false,
   className,
   ...p

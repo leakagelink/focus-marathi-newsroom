@@ -57,7 +57,7 @@ export function PublicApp() {
     <div className="relative min-h-full pb-20">
       <div className="flex items-center justify-between px-4 py-2">
         {tab !== "Home" || history.length > 0 ? (
-          <button onClick={back} aria-label="मागे" title="मागे" className="glass grid size-8 shrink-0 place-items-center rounded-xl text-muted-foreground transition hover:border-primary/50 hover:text-foreground active:scale-95"><ArrowLeft className="size-4" /></button>
+          <button onClick={back} aria-label="मागें" title="मागें" className="glass grid size-8 shrink-0 place-items-center rounded-xl text-muted-foreground transition hover:border-primary/50 hover:text-foreground active:scale-95"><ArrowLeft className="size-4" /></button>
         ) : (
           <span className="text-lg">☰</span>
         )}
@@ -154,7 +154,7 @@ function Detail({ n, onBack, adName }: { n: NewsArticle; onBack: () => void; adN
   return (
     <div className="space-y-3 px-3 pb-6 animate-in fade-in slide-in-from-right-4">
       <div className="sticky -top-px z-20 -mx-3 flex items-center gap-2 bg-background/90 px-3 py-2 backdrop-blur">
-        <button onClick={onBack} aria-label="मागे" title="मागे" className="glass grid size-8 shrink-0 place-items-center rounded-xl text-muted-foreground transition hover:border-primary/50 hover:text-foreground active:scale-95"><ArrowLeft className="size-4" /></button>
+        <button onClick={onBack} aria-label="मागें" title="मागें" className="glass grid size-8 shrink-0 place-items-center rounded-xl text-muted-foreground transition hover:border-primary/50 hover:text-foreground active:scale-95"><ArrowLeft className="size-4" /></button>
         <h2 className="flex-1 text-center font-bold">बातमीचा तपशील</h2>
         <span className="w-8" />
       </div>
@@ -178,7 +178,7 @@ function Detail({ n, onBack, adName }: { n: NewsArticle; onBack: () => void; adN
         <button onClick={() => { navigator.clipboard?.writeText(`${n.headline} — FOCUS 24 NEWS`); toast("लिंक कॉपी केली"); }} className="glass flex flex-1 items-center justify-center gap-1 rounded-xl py-2 text-xs"><Share2 className="size-4" />Share</button>
         <button onClick={() => toast.success("बुकमार्क केले")} className="glass flex flex-1 items-center justify-center gap-1 rounded-xl py-2 text-xs"><Bookmark className="size-4" />Save</button>
       </div>
-      <button onClick={onBack} className="glass flex w-full items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-semibold text-muted-foreground transition hover:border-primary/50 hover:text-foreground active:scale-[0.98]"><ArrowLeft className="size-4" />मागे</button>
+      <button onClick={onBack} className="glass flex w-full items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-semibold text-muted-foreground transition hover:border-primary/50 hover:text-foreground active:scale-[0.98]"><ArrowLeft className="size-4" />मागें</button>
     </div>
   );
 }

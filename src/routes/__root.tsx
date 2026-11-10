@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet, Link, createRootRouteWithContext, useRouter, useRouterState, HeadContent, Scripts, type ErrorComponentProps,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Smartphone, UserRound, Monitor, Radio } from "lucide-react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -92,7 +92,10 @@ function RootComponent() {
   const role = useStore((s) => s.role);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   // Nothing sits behind the home screen on a fresh open, so no back button there.
-  const showBack = pathname !== "/" || canGoBack();
+  // The history check only runs in the browser, so the first render matches the server.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const showBack = pathname !== "/" || (mounted && canGoBack());
   return (
     <QueryClientProvider client={queryClient}>
       <header className="sticky top-0 z-50 border-b border-glass-border bg-background/70 backdrop-blur-xl">
