@@ -1,0 +1,168 @@
+import { useEffect, useMemo, useState } from "react";
+import { ArrowLeft, Bell, Bookmark, Building2, CalendarDays, Clapperboard, Home, Landmark, MapPin, Megaphone, Mic, Play, Search, Share2, Tv, UserRound, Users, Zap } from "lucide-react";
+import { toast } from "sonner";
+import { Glass, LiveDot, Logo, Pill, Ticker } from "@/components/ui/glass";
+import { useStore } from "@/lib/store";
+import { DISTRICTS, districtName } from "@/data/maharashtra";
+import { IMAGES, SAMPLE_VIDEOS } from "@/data/mock";
+import type { NewsArticle } from "@/types";
+
+const tabs = ["Home", "Live TV", "महाराष्ट्र", "जिल्हे", "विधानसभा"] as const;
+const tiles = [
+  { icon: Landmark, label: "विधानसभा बातम्या", tab: "विधानसभा" }, { icon: MapPin, label: "जिल्हा बातम्या", tab: "जिल्हे" },
+  { icon: Zap, label: "सुपरफास्ट 100", tab: "superfast" }, { icon: Clapperboard, label: "Live कार्यक्रम", tab: "Live TV" },
+  { icon: Play, label: "व्हिडिओ शॉर्ट न्यूज", tab: "Home" }, { icon: Mic, label: "विशेष मुलाखत", tab: "Home" },
+  { icon: Megaphone, label: "जाहिराती", tab: "ad" }, { icon: Users, label: "माझा प्रतिनिधी", tab: "rep" },
+];
+
+const timeAgo = (iso: string) => { const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000); return m < 60 ? `${m} मिनिटांपूर्वी` : `${Math.round(m / 60)} तासांपूर्वी`; };
+
+export function PublicApp() {
+  const [splash, setSplash] = useState(true);
+  const [tab, setTab] = useState<string>("Home");
+  const [open, setOpen] = useState<NewsArticle | null>(null);
+  const [district, setDistrict] = useState("all");
+  const news = useStore((s) => s.news);
+  const breaking = useStore((s) => s.breaking);
+  const ads = useStore((s) => s.ads.filter((a) => a.active));
+  const bulletin = useStore((s) => s.bulletin);
+  const published = useStore((s) => s.bulletinPublished);
+  const nowPlaying = useStore((s) => s.news.find((n) => n.id === s.nowPlaying));
+  useEffect(() => { const t = setTimeout(() => setSplash(false), 1800); return () => clearTimeout(t); }, []);
+
+  const live = useMemo(() => news.filter((n) => n.status === "approved" || n.status === "broadcasted")
+    .filter((n) => district === "all" || n.districtId === district), [news, district]);
+
+  if (splash) return (
+    <button onClick={() => setSplash(false)} className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden text-center">
+      <img src={IMAGES.vidhan} alt="" className="absolute inset-0 h-full w-full object-cover opacity-25" />
+      <div className="absolute inset-0 bg-linear-to-b from-primary/40 via-background/60 to-background" />
+      <div className="relative animate-in fade-in zoom-in-95 duration-700">
+        <Logo size="lg" />
+        <p className="mt-6 text-[11px] font-semibold tracking-[0.3em] text-muted-foreground">MAHARASHTRA'S<br />DIGITAL NEWS NETWORK</p>
+        <p className="mt-10 px-8 text-lg font-semibold leading-relaxed">महाराष्ट्राच्या प्रत्येक विधानसभा क्षेत्राची बातमी, आता एका मंचावर...</p>
+      </div>
+    </button>
+  );
+
+  if (open) return <Detail n={open} onBack={() => setOpen(null)} adName={ads[0]?.advertiser} />;
+
+  return (
+    <div className="relative min-h-full pb-20">
+      <div className="flex items-center justify-between px-4 py-2">
+        <span className="text-lg">☰</span><Logo size="sm" />
+        <div className="flex gap-3"><Search className="size-5" /><Bell className="size-5" onClick={() => toast("🔔 सूचना चालू आहेत")} /></div>
+      </div>
+      <div className="flex gap-1.5 overflow-x-auto px-3 pb-2">
+        {tabs.map((t) => (
+          <button key={t} onClick={() => setTab(t)} className={`shrink-0 rounded-lg px-3 py-1 text-xs font-semibold ${tab === t ? "bg-primary text-primary-foreground" : "glass text-muted-foreground"}`}>{t}</button>
+        ))}
+      </div>
+
+      {(tab === "Home" || tab === "Live TV" || tab === "महाराष्ट्र") && (
+        <div className="space-y-3 px-3">
+          <div className="relative overflow-hidden rounded-2xl border border-primary/40">
+            {tab === "Live TV"
+              ? <video src={SAMPLE_VIDEOS[0]} autoPlay muted loop playsInline className="aspect-video w-full object-cover" />
+              : <img src={IMAGES.studio} alt="Live studio" className="aspect-video w-full object-cover" />}
+            <div className="absolute right-2 top-2"><LiveDot /></div>
+            <div className="absolute bottom-0 inset-x-0 bg-linear-to-t from-background/90 p-2 text-xs font-semibold">
+              {nowPlaying ? `आता प्रसारित: ${nowPlaying.headline}` : "24×7 LIVE NEWS · FOCUS 24 NEWS मराठी"}
+            </div>
+          </div>
+          <Ticker items={breaking.map((b) => b.text)} />
+          {tab === "Home" && (
+            <div className="grid grid-cols-4 gap-2">
+              {tiles.map((t) => (
+                <button key={t.label} onClick={() => t.tab === "ad" ? toast(`जाहिरात: ${ads[0]?.advertiser ?? "—"}`) : t.tab === "rep" ? toast("तुमचे प्रतिनिधी: राजेश पाटील (कराड दक्षिण)") : setTab(t.tab)}
+                  className="glass flex flex-col items-center gap-1 rounded-xl p-2 text-center text-[10px] leading-tight transition hover:border-primary/50">
+                  <t.icon className="size-5 text-neon" />{t.label}
+                </button>
+              ))}
+            </div>
+          )}
+          {ads[0] && <Glass className="flex items-center justify-between p-2.5 text-xs"><span><Pill tone="amber">AD</Pill> {ads[0].advertiser}</span><span className="text-faint">प्रायोजित</span></Glass>}
+          <List title="ताज्या बातम्या" items={live} onOpen={setOpen} />
+        </div>
+      )}
+
+      {(tab === "जिल्हे" || tab === "विधानसभा") && (
+        <div className="space-y-3 px-3">
+          <select value={district} onChange={(e) => setDistrict(e.target.value)} className="w-full rounded-xl glass bg-card px-3 py-2 text-sm">
+            <option value="all">सर्व जिल्हे (36)</option>
+            {DISTRICTS.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+          </select>
+          <List title={tab === "जिल्हे" ? "जिल्हा बातम्या" : "विधानसभा बातम्या"} items={live} onOpen={setOpen} showSeat={tab === "विधानसभा"} />
+        </div>
+      )}
+
+      {tab === "superfast" && (
+        <div className="space-y-2 px-3">
+          <Glass red className="p-3"><div className="flex items-center gap-2 font-bold"><Zap className="size-5 text-neon" />सुपरफास्ट 100</div>
+            <p className="text-xs text-muted-foreground">{published ? "आजचे बुलेटिन प्रकाशित ✓" : "पुढील बुलेटिन लवकरच..."}</p></Glass>
+          {bulletin.map((id, i) => { const n = news.find((x) => x.id === id); return n && (
+            <button key={id} onClick={() => setOpen(n)} className="glass flex w-full items-center gap-2 rounded-xl p-2 text-left text-xs">
+              <span className="w-6 text-center font-bold text-neon">{i + 1}</span>{n.headline}
+            </button>); })}
+        </div>
+      )}
+
+      <div className="fixed bottom-0 inset-x-0 z-30 flex justify-around border-t border-glass-border bg-card/90 py-2 text-[10px] backdrop-blur">
+        {[{ i: Home, l: "Home" }, { i: Tv, l: "Live TV" }, { i: Play, l: "Shorts" }, { i: Building2, l: "जिल्हे" }, { i: UserRound, l: "Profile" }].map(({ i: I, l }) => (
+          <button key={l} onClick={() => setTab(l === "Shorts" ? "superfast" : l === "Profile" ? "Home" : l)} className={`flex flex-col items-center gap-0.5 ${tab === l ? "text-neon" : "text-muted-foreground"}`}><I className="size-5" />{l}</button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function List({ title, items, onOpen, showSeat }: { title: string; items: NewsArticle[]; onOpen: (n: NewsArticle) => void; showSeat?: boolean }) {
+  return (
+    <div>
+      <div className="mb-2 flex justify-between"><h3 className="font-bold">{title}</h3><span className="text-xs text-muted-foreground">सर्व पहा →</span></div>
+      <div className="space-y-2">
+        {items.length === 0 && <p className="py-6 text-center text-xs text-faint">या भागात अजून बातम्या नाहीत</p>}
+        {items.map((n) => (
+          <button key={n.id} onClick={() => onOpen(n)} className="glass flex w-full gap-2.5 rounded-xl p-2 text-left transition hover:border-primary/50 animate-in fade-in slide-in-from-bottom-2">
+            <img src={n.image} alt="" loading="lazy" className="h-16 w-24 shrink-0 rounded-lg object-cover" />
+            <div className="min-w-0 flex-1">
+              <p className="line-clamp-2 text-[13px] font-semibold leading-snug">{n.headline}</p>
+              <p className="mt-1 text-[10px] text-faint">{districtName(n.districtId)}{showSeat && ` · ${n.constituency}`} | {timeAgo(n.createdAt)}</p>
+            </div>
+            {n.importance === "breaking" && <Pill tone="red">ब्रेकिंग</Pill>}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Detail({ n, onBack, adName }: { n: NewsArticle; onBack: () => void; adName?: string | undefined }) {
+  const [clip, setClip] = useState(0);
+  const labels = ["Location (10s)", "Anchoring (20s)", "First Byte (60s)", "Second Byte (60s)"];
+  return (
+    <div className="space-y-3 px-3 pb-6 animate-in fade-in slide-in-from-right-4">
+      <div className="flex items-center gap-3 py-1"><ArrowLeft className="size-5 cursor-pointer" onClick={onBack} /><h2 className="flex-1 text-center font-bold">बातमीचा तपशील</h2><span className="w-5" /></div>
+      <video key={clip} src={SAMPLE_VIDEOS[clip]} poster={n.image} controls autoPlay muted playsInline className="aspect-video w-full rounded-xl object-cover" />
+      <h1 className="text-lg font-bold leading-snug">{n.headline}</h1>
+      <div className="flex flex-wrap gap-1.5 text-[11px]">
+        <Pill><MapPin className="size-3" />{districtName(n.districtId)}</Pill><Pill><Landmark className="size-3" />{n.constituency}</Pill>
+        <Pill><CalendarDays className="size-3" />{new Date(n.createdAt).toLocaleString("mr-IN", { hour: "2-digit", minute: "2-digit" })}</Pill>
+      </div>
+      <p className="text-sm leading-relaxed text-muted-foreground">{n.script}</p>
+      <p className="text-xs font-semibold"><span className="text-neon">●</span> संबंधित व्हिडिओ (2:30 मिनिटे)</p>
+      <div className="grid grid-cols-4 gap-1.5">
+        {labels.map((l, i) => (
+          <button key={l} onClick={() => setClip(i)} className={`text-center text-[9px] ${clip === i ? "text-neon" : "text-muted-foreground"}`}>
+            <div className={`relative mb-1 overflow-hidden rounded-lg border ${clip === i ? "border-primary" : "border-glass-border"}`}><img src={n.image} alt="" className="aspect-square object-cover" /><Play className="absolute inset-0 m-auto size-5" /></div>{l}
+          </button>
+        ))}
+      </div>
+      {adName && <Glass className="p-2 text-center text-xs"><Pill tone="amber">AD</Pill> {adName}</Glass>}
+      <div className="flex gap-2">
+        <button onClick={() => { navigator.clipboard?.writeText(`${n.headline} — FOCUS 24 NEWS`); toast("लिंक कॉपी केली"); }} className="glass flex flex-1 items-center justify-center gap-1 rounded-xl py-2 text-xs"><Share2 className="size-4" />Share</button>
+        <button onClick={() => toast.success("बुकमार्क केले")} className="glass flex flex-1 items-center justify-center gap-1 rounded-xl py-2 text-xs"><Bookmark className="size-4" />Save</button>
+      </div>
+    </div>
+  );
+}
