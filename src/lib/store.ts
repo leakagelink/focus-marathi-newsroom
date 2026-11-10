@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from "react";
+import { useRef, useSyncExternalStore } from "react";
 import { toast } from "sonner";
 import { ADS, BREAKING, JOURNALISTS, NEWS, PAYMENTS } from "@/data/mock";
 import type { Advertisement, BreakingNews, Journalist, NewsArticle, NewsStatus, Payment, Role } from "@/types";
@@ -34,8 +34,15 @@ let state: State = {
 const subs = new Set<() => void>();
 const set = (fn: (s: State) => Partial<State>) => { state = { ...state, ...fn(state) }; subs.forEach((f) => f()); };
 export const getState = () => state;
+const subscribe = (cb: () => void) => { subs.add(cb); return () => { subs.delete(cb); }; };
 export function useStore<T>(sel: (s: State) => T): T {
-  return useSyncExternalStore((cb) => { subs.add(cb); return () => subs.delete(cb); }, () => sel(state), () => sel(state));
+  // Cache per state snapshot: selectors like filter() return new arrays, which would loop forever.
+  const cache = useRef<{ s: State; v: T } | null>(null);
+  const get = () => {
+    if (!cache.current || cache.current.s !== state) cache.current = { s: state, v: sel(state) };
+    return cache.current.v;
+  };
+  return useSyncExternalStore(subscribe, get, get);
 }
 
 const notify = (kind: State["notifications"][number]["kind"], text: string) =>
