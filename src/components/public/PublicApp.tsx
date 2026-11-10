@@ -20,6 +20,7 @@ const timeAgo = (iso: string) => { const m = Math.round((Date.now() - new Date(i
 export function PublicApp() {
   const [splash, setSplash] = useState(true);
   const [tab, setTab] = useState<string>("Home");
+  const [history, setHistory] = useState<string[]>([]);
   const [open, setOpen] = useState<NewsArticle | null>(null);
   const [district, setDistrict] = useState("all");
   const news = useStore((s) => s.news);
@@ -29,6 +30,10 @@ export function PublicApp() {
   const published = useStore((s) => s.bulletinPublished);
   const nowPlaying = useStore((s) => s.news.find((n) => n.id === s.nowPlaying));
   useEffect(() => { const t = setTimeout(() => setSplash(false), 1800); return () => clearTimeout(t); }, []);
+
+  // In-app back stack: every screen opened from another one can be returned from.
+  const go = (t: string) => { setHistory((h) => [...h, tab]); setTab(t); };
+  const back = () => { const prev = history.at(-1) ?? "Home"; setHistory((h) => h.slice(0, -1)); setTab(prev); };
 
   const live = useMemo(() => news.filter((n) => n.status === "approved" || n.status === "broadcasted")
     .filter((n) => district === "all" || n.districtId === district), [news, district]);
@@ -42,6 +47,7 @@ export function PublicApp() {
         <p className="mt-6 text-[11px] font-semibold tracking-[0.3em] text-muted-foreground">MAHARASHTRA'S<br />DIGITAL NEWS NETWORK</p>
         <p className="mt-10 px-8 text-lg font-semibold leading-relaxed">महाराष्ट्राच्या प्रत्येक विधानसभा क्षेत्राची बातमी, आता एका मंचावर...</p>
       </div>
+      <span className="absolute bottom-8 z-10 rounded-full glass px-3 py-1 text-[11px] text-muted-foreground">स्पर्श करून पुढे जा →</span>
     </button>
   );
 
@@ -50,12 +56,17 @@ export function PublicApp() {
   return (
     <div className="relative min-h-full pb-20">
       <div className="flex items-center justify-between px-4 py-2">
-        <span className="text-lg">☰</span><Logo size="sm" />
+        {tab !== "Home" || history.length > 0 ? (
+          <button onClick={back} aria-label="मागे" title="मागे" className="glass grid size-8 shrink-0 place-items-center rounded-xl text-muted-foreground transition hover:border-primary/50 hover:text-foreground active:scale-95"><ArrowLeft className="size-4" /></button>
+        ) : (
+          <span className="text-lg">☰</span>
+        )}
+        <Logo size="sm" />
         <div className="flex gap-3"><Search className="size-5" /><Bell className="size-5" onClick={() => toast("🔔 सूचना चालू आहेत")} /></div>
       </div>
       <div className="flex gap-1.5 overflow-x-auto px-3 pb-2">
         {tabs.map((t) => (
-          <button key={t} onClick={() => setTab(t)} className={`shrink-0 rounded-lg px-3 py-1 text-xs font-semibold ${tab === t ? "bg-primary text-primary-foreground" : "glass text-muted-foreground"}`}>{t}</button>
+          <button key={t} onClick={() => go(t)} className={`shrink-0 rounded-lg px-3 py-1 text-xs font-semibold ${tab === t ? "bg-primary text-primary-foreground" : "glass text-muted-foreground"}`}>{t}</button>
         ))}
       </div>
 
@@ -74,7 +85,7 @@ export function PublicApp() {
           {tab === "Home" && (
             <div className="grid grid-cols-4 gap-2">
               {tiles.map((t) => (
-                <button key={t.label} onClick={() => t.tab === "ad" ? toast(`जाहिरात: ${ads[0]?.advertiser ?? "—"}`) : t.tab === "rep" ? toast("तुमचे प्रतिनिधी: राजेश पाटील (कराड दक्षिण)") : setTab(t.tab)}
+                <button key={t.label} onClick={() => t.tab === "ad" ? toast(`जाहिरात: ${ads[0]?.advertiser ?? "—"}`) : t.tab === "rep" ? toast("तुमचे प्रतिनिधी: राजेश पाटील (कराड दक्षिण)") : go(t.tab)}
                   className="glass flex flex-col items-center gap-1 rounded-xl p-2 text-center text-[10px] leading-tight transition hover:border-primary/50">
                   <t.icon className="size-5 text-neon" />{t.label}
                 </button>
@@ -109,7 +120,7 @@ export function PublicApp() {
 
       <div className="fixed bottom-0 inset-x-0 z-30 flex justify-around border-t border-glass-border bg-card/90 py-2 text-[10px] backdrop-blur">
         {[{ i: Home, l: "Home" }, { i: Tv, l: "Live TV" }, { i: Play, l: "Shorts" }, { i: Building2, l: "जिल्हे" }, { i: UserRound, l: "Profile" }].map(({ i: I, l }) => (
-          <button key={l} onClick={() => setTab(l === "Shorts" ? "superfast" : l === "Profile" ? "Home" : l)} className={`flex flex-col items-center gap-0.5 ${tab === l ? "text-neon" : "text-muted-foreground"}`}><I className="size-5" />{l}</button>
+          <button key={l} onClick={() => go(l === "Shorts" ? "superfast" : l === "Profile" ? "Home" : l)} className={`flex flex-col items-center gap-0.5 ${tab === l ? "text-neon" : "text-muted-foreground"}`}><I className="size-5" />{l}</button>
         ))}
       </div>
     </div>
@@ -142,7 +153,11 @@ function Detail({ n, onBack, adName }: { n: NewsArticle; onBack: () => void; adN
   const labels = ["Location (10s)", "Anchoring (20s)", "First Byte (60s)", "Second Byte (60s)"];
   return (
     <div className="space-y-3 px-3 pb-6 animate-in fade-in slide-in-from-right-4">
-      <div className="flex items-center gap-3 py-1"><ArrowLeft className="size-5 cursor-pointer" onClick={onBack} /><h2 className="flex-1 text-center font-bold">बातमीचा तपशील</h2><span className="w-5" /></div>
+      <div className="sticky -top-px z-20 -mx-3 flex items-center gap-2 bg-background/90 px-3 py-2 backdrop-blur">
+        <button onClick={onBack} aria-label="मागे" title="मागे" className="glass grid size-8 shrink-0 place-items-center rounded-xl text-muted-foreground transition hover:border-primary/50 hover:text-foreground active:scale-95"><ArrowLeft className="size-4" /></button>
+        <h2 className="flex-1 text-center font-bold">बातमीचा तपशील</h2>
+        <span className="w-8" />
+      </div>
       <video key={clip} src={SAMPLE_VIDEOS[clip]} poster={n.image} controls autoPlay muted playsInline className="aspect-video w-full rounded-xl object-cover" />
       <h1 className="text-lg font-bold leading-snug">{n.headline}</h1>
       <div className="flex flex-wrap gap-1.5 text-[11px]">
@@ -163,6 +178,7 @@ function Detail({ n, onBack, adName }: { n: NewsArticle; onBack: () => void; adN
         <button onClick={() => { navigator.clipboard?.writeText(`${n.headline} — FOCUS 24 NEWS`); toast("लिंक कॉपी केली"); }} className="glass flex flex-1 items-center justify-center gap-1 rounded-xl py-2 text-xs"><Share2 className="size-4" />Share</button>
         <button onClick={() => toast.success("बुकमार्क केले")} className="glass flex flex-1 items-center justify-center gap-1 rounded-xl py-2 text-xs"><Bookmark className="size-4" />Save</button>
       </div>
+      <button onClick={onBack} className="glass flex w-full items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-semibold text-muted-foreground transition hover:border-primary/50 hover:text-foreground active:scale-[0.98]"><ArrowLeft className="size-4" />मागे</button>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
-  Outlet, Link, createRootRouteWithContext, useRouter, HeadContent, Scripts, type ErrorComponentProps,
+  Outlet, Link, createRootRouteWithContext, useRouter, useRouterState, HeadContent, Scripts, type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 import { Smartphone, UserRound, Monitor, Radio } from "lucide-react";
@@ -8,6 +8,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { Logo } from "@/components/ui/glass";
+import { BackButton, canGoBack } from "@/components/BackButton";
 import { actions, useStore } from "@/lib/store";
 import type { Role } from "@/types";
 
@@ -89,10 +90,14 @@ const roles: { id: Role; label: string }[] = [
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const role = useStore((s) => s.role);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  // Nothing sits behind the home screen on a fresh open, so no back button there.
+  const showBack = pathname !== "/" || canGoBack();
   return (
     <QueryClientProvider client={queryClient}>
       <header className="sticky top-0 z-50 border-b border-glass-border bg-background/70 backdrop-blur-xl">
         <div className="mx-auto flex h-13 max-w-[1600px] items-center gap-2 px-2 pt-[env(safe-area-inset-top)] sm:gap-3 sm:px-4">
+          {showBack && <BackButton iconOnly className="size-8 shrink-0" />}
           <Link to="/" className="hidden shrink-0 sm:block"><Logo size="sm" /></Link>
           <nav className="flex min-w-0 flex-1 gap-1 overflow-x-auto [scrollbar-width:none] sm:justify-center sm:gap-1.5">
             {views.map((v) => (

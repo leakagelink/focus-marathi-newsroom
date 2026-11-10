@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { BackButton } from "@/components/BackButton";
 import { Glass, GlowButton, LiveDot, Logo, Ticker } from "@/components/ui/glass";
 import { actions, useStore, type Source } from "@/lib/store";
 import { SAMPLE_VIDEOS } from "@/data/mock";
@@ -24,7 +25,10 @@ function Broadcast() {
   return (
     <main className="mx-auto grid max-w-[1400px] gap-4 px-3 py-4 sm:px-4 sm:py-6 lg:grid-cols-[2fr_1fr]">
       <Glass red className="space-y-3 p-4">
-        <div className="flex items-center justify-between"><h1 className="font-bold">Master Control</h1>{s.onAir && <LiveDot label="ON AIR" />}</div>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-2"><BackButton /><h1 className="truncate font-bold">Master Control</h1></div>
+          {s.onAir && <LiveDot label="ON AIR" />}
+        </div>
         <div className="relative overflow-hidden rounded-xl">
           {s.source === "standby" ? <div className="grid aspect-video place-items-center bg-card"><Logo size="lg" /></div>
             : <video key={s.source} src={SAMPLE_VIDEOS[idx % 4]} autoPlay muted loop playsInline className="aspect-video w-full object-cover" />}

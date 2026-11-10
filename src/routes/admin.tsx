@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { CheckCircle2, Clock, Users, MapPin, Radio, XCircle, Send, Zap } from "lucide-react";
+import { BackButton } from "@/components/BackButton";
 import { Glass, GlowButton, Pill, Stat, inputCls } from "@/components/ui/glass";
 import { actions, useStore } from "@/lib/store";
 import { districtName } from "@/data/maharashtra";
@@ -27,7 +28,10 @@ function Admin() {
   const cur = news.find((n) => n.id === sel) ?? pending[0];
   return (
     <main className="mx-auto max-w-[1400px] space-y-4 px-3 py-4 sm:space-y-5 sm:px-4 sm:py-6">
-      <h1 className="text-lg font-bold sm:text-2xl">FOCUS 24 NEWS मराठी · संपूर्ण नियंत्रण पॅनेल</h1>
+      <div className="flex flex-wrap items-center gap-2">
+        <BackButton />
+        <h1 className="text-lg font-bold sm:text-2xl">FOCUS 24 NEWS मराठी · संपूर्ण नियंत्रण पॅनेल</h1>
+      </div>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat icon={<Users className="size-5" />} value="288" label="विधानसभा प्रतिनिधी" sub="Active: 242" />
         <Stat icon={<MapPin className="size-5" />} value="36" label="जिल्हा प्रतिनिधी" sub="Active: 36" />

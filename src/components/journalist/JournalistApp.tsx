@@ -18,12 +18,25 @@ const ME = "j1";
 export function JournalistApp() {
   const [authed, setAuthed] = useState(false);
   const [tab, setTab] = useState<"upload" | "list" | "earn">("upload");
+  const [history, setHistory] = useState<"upload" | "list" | "earn">[]>([]);
   const me = useStore((s) => s.journalists.find((j) => j.id === ME)!);
   const mine = useStore((s) => s.news.filter((n) => n.reporterId === ME));
   if (!authed) return <Login onDone={() => setAuthed(true)} />;
+  // In-app back: previous section first, and the login screen once at the start.
+  const go = (k: "upload" | "list" | "earn") => { setHistory((h) => [...h, tab]); setTab(k); };
+  const back = () => {
+    const prev = history.at(-1);
+    setHistory((h) => h.slice(0, -1));
+    if (prev) setTab(prev);
+    else setAuthed(false);
+  };
   return (
     <div className="space-y-3 px-3 pb-24">
-      <h2 className="py-1 text-center font-bold">पत्रकार पोर्टल</h2>
+      <div className="flex items-center gap-2 py-1">
+        <button onClick={back} aria-label="मागें" title="मागें" className="glass grid size-8 shrink-0 place-items-center rounded-xl text-muted-foreground transition hover:border-primary/50 hover:text-foreground active:scale-95"><ArrowLeft className="size-4" /></button>
+        <h2 className="flex-1 text-center font-bold">पत्रकार पोर्टल</h2>
+        <span className="w-8" />
+      </div>
       <Glass className="flex items-center gap-3 p-3">
         <img src={me.avatar} alt="" className="size-12 rounded-full" />
         <div className="flex-1 text-xs">
@@ -42,7 +55,7 @@ export function JournalistApp() {
       {tab === "earn" && <Earnings />}
       <div className="fixed bottom-0 inset-x-0 z-30 flex justify-around border-t border-glass-border bg-card/95 py-2 text-[10px] backdrop-blur">
         {([["upload", CloudUpload, "अपलोड"], ["list", ListChecks, "माझे अपलोड"], ["earn", Wallet, "कमाई"]] as const).map(([k, I, l]) => (
-          <button key={k} onClick={() => setTab(k)} className={`flex flex-col items-center gap-0.5 ${tab === k ? "text-neon" : "text-muted-foreground"}`}><I className="size-5" />{l}</button>
+          <button key={k} onClick={() => go(k)} className={`flex flex-col items-center gap-0.5 ${tab === k ? "text-neon" : "text-muted-foreground"}`}><I className="size-5" />{l}</button>
         ))}
       </div>
     </div>
