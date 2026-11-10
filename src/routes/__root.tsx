@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet, Link, createRootRouteWithContext, useRouter, useRouterState, HeadContent, Scripts, type ErrorComponentProps,
 } from "@tanstack/react-router";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Smartphone, UserRound, Monitor, Radio } from "lucide-react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -95,10 +95,21 @@ function RootComponent() {
   // The history check only runs in the browser, so the first render matches the server.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+  // Share the real top-bar height (it grows with the phone's notch area) so the app screen below fits exactly.
+  const headerRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const apply = () => document.documentElement.style.setProperty("--header-h", `${el.offsetHeight}px`);
+    apply();
+    const ro = new ResizeObserver(apply);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   const showBack = pathname !== "/" || (mounted && canGoBack());
   return (
     <QueryClientProvider client={queryClient}>
-      <header className="sticky top-0 z-50 border-b border-glass-border bg-background/90 pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] backdrop-blur-xl">
+      <header ref={headerRef} className="sticky top-0 z-50 border-b border-glass-border bg-background/90 pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] backdrop-blur-xl">
         <div className="mx-auto flex min-h-13 max-w-[1600px] items-center gap-1.5 px-2 py-1.5 sm:gap-3 sm:px-4">
           {showBack && <BackButton iconOnly className="size-8 shrink-0" />}
           <Link to="/" className="hidden shrink-0 sm:block"><Logo size="sm" /></Link>
