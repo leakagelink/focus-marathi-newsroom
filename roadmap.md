@@ -1,5 +1,6 @@
 # Live backend
-- [ ] Expand admin control: journalist details, approval-first publication, and add/edit/manage/delete; confirm which app sections full management includes.
+- [x] Add journalist profile editing, searchable news with approval/rejection/withdrawal and confirmed deletion; managed categories, districts, ads, live sources, bulletins, payment records and publishing-access suspension.
+- [ ] Verify authenticated admin CRUD, journalist submission → approval → public display, and publishing-access suspension end-to-end; no auth accounts exist yet. Permanent auth-account deletion and real payment transfer are not implemented.
 - [x] Add text-only submission and device-powered news listening without AI credits or API calls; validation and speech-control tests pass. Actual installed-phone audio remains unverified because the test browser has no Marathi/Hindi voice.
 - [x] Persist news, moderation, breaking news and broadcast settings with protected access.
 - [x] Replace demo login with real accounts, profiles and private video uploads.

@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { BackButton } from "@/components/BackButton";
 import { Glass, GlowButton, LiveDot, Logo, Ticker } from "@/components/ui/glass";
 import { actions, useStore, type Source } from "@/lib/store";
-import { SAMPLE_VIDEOS } from "@/data/mock";
 import { AccountForm } from '@/components/AccountForm';
 
 export const Route = createFileRoute("/broadcast")({
@@ -24,7 +23,7 @@ const sources: [Source, string][] = [["studio", "Studio Anchor"], ["field", "Fie
 function Broadcast() {
   const s = useStore((x) => x);
   const now = s.news.find((n) => n.id === s.nowPlaying);
-  const idx = sources.findIndex(([k]) => k === s.source);
+  const liveUrl = String(s.content.find(c=>c.kind==='live'&&c.active)?.data['url'] ?? '');
   if (!s.ready) return <main className="p-6">कृपया थांबा…</main>;
   if (!s.userId) return <main><BackButton /><AccountForm /></main>;
   if (s.role !== 'admin' && s.role !== 'editor') return <main className="space-y-4 p-6"><BackButton /><p>संपादकीय प्रवेश आवश्यक</p></main>;
@@ -38,7 +37,7 @@ function Broadcast() {
         <p className="text-xs text-warning">प्रसारण प्रिव्ह्यू · YouTube / Facebook लाईव्ह जोडलेले नाही.</p>
         <div className="relative overflow-hidden rounded-xl">
           {s.source === "standby" ? <div className="grid aspect-video place-items-center bg-card"><Logo size="lg" /></div>
-            : <video key={s.source} src={SAMPLE_VIDEOS[idx % 4]} autoPlay muted loop playsInline className="aspect-video w-full object-cover" />}
+            : liveUrl ? <video key={liveUrl} src={liveUrl} controls muted playsInline className="aspect-video w-full object-cover" /> : <div className="grid aspect-video place-items-center bg-card text-muted-foreground">लाईव्ह स्रोत जोडलेला नाही</div>}
           {s.overlays.logo && <div className="absolute right-3 top-3"><Logo size="sm" /></div>}
           {s.overlays.headline && now && <div className="absolute inset-x-6 bottom-20 rounded bg-background/80 p-2 text-lg font-bold">{now.headline}</div>}
           {s.overlays.breaking && <div className="absolute inset-x-0 bottom-0"><Ticker items={s.breaking.map((b) => b.text)} /></div>}

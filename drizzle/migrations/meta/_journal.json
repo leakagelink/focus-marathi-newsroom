@@ -36,6 +36,13 @@
       "when": 1794386962174,
       "tag": "0004_complete_admin_management",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794387311409,
+      "tag": "0005_protect_account_and_payment_management",
+      "breakpoints": true
     }
   ]
 }
