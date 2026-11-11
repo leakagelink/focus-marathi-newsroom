@@ -5,12 +5,15 @@ import type { Advertisement, BreakingNews, Journalist, NewsArticle, NewsStatus, 
 import { supabase } from '@/integrations/supabase/client';
 import { submissionSchema } from './news-validation';
 import { IMAGES } from '@/data/mock';
+import type { Tables } from '@/integrations/supabase/types';
 
 export type Source = "studio" | "field" | "superfast" | "ads" | "standby";
 export interface State {
   content: {id:string;kind:string;name:string;active:boolean;data:Record<string,unknown>}[];
   userId: string | null;
   ready: boolean;
+  ownProfile: Tables<'profiles'> | null;
+  profileError: boolean;
   role: Role;
   news: NewsArticle[];
   breaking: BreakingNews[];
@@ -31,6 +34,7 @@ export interface State {
 let state: State = {
   content: [],
   userId: null, ready: false,
+  ownProfile: null, profileError: false,
   role: "public",
   news: [], breaking: [], ads: [], journalists: [], payments: [],
   bulletin: [],
@@ -60,12 +64,31 @@ let refreshVersion = 0;
 export async function refreshCloud() {
   const version = ++refreshVersion;
   const { data: { user } } = await supabase.auth.getUser();
-  const [news, breaking, settings, roles, profiles, content, payments] = await Promise.all([
+  if (version !== refreshVersion) return;
+  if (state.userId !== (user?.id ?? null)) {
+    set(() => ({ userId: user?.id ?? null, role: 'public', ready: false, ownProfile: null, profileError: false, journalists: [], news: [], payments: [], content: [], ads: [], breaking: [], bulletin: [], bulletinPublished: false, onAir: false }));
+  }
+  // Account readiness must not wait for unrelated feeds or video URL signing.
+  const account = Promise.all([
+    user ? supabase.from('user_roles').select('role').eq('user_id', user.id) : Promise.resolve({ data: [], error: null }),
+    user ? supabase.from('profiles').select('*') : Promise.resolve({ data: [], error: null }),
+  ]).then(([roles, profiles]) => {
+    const assigned = roles.data ?? [];
+    const role: Role = assigned.some(r => r.role === 'admin') ? 'admin' : assigned.some(r => r.role === 'editor') ? 'editor' : user ? 'journalist' : 'public';
+    if (version === refreshVersion) {
+      set(() => ({ userId: user?.id ?? null, ready: true, role,
+        ownProfile: profiles.data?.find(p => p.id === user?.id) ?? null,
+        profileError: !!user && (!!profiles.error || !profiles.data?.some(p => p.id === user.id)),
+        journalists: (profiles.data ?? []).map(p => ({ id:p.id,name:p.name,role:'पत्रकार',districtId:p.district_id,constituencyId:p.constituency,avatar:p.avatar,code:'',phone:p.phone,email:p.contact_email,rating:0,submitted:state.news.filter(n=>n.reporterId===p.id).length,approved:state.news.filter(n=>n.reporterId===p.id && ['approved','broadcasted'].includes(n.status)).length,status:'verified' as const })),
+      }));
+    }
+    return { roles, profiles, role };
+  });
+  const [news, breaking, settings, { profiles, role }, content, payments] = await Promise.all([
     supabase.from('news').select('*').order('created_at', { ascending: false }).limit(500),
     supabase.from('breaking_news').select('*').order('created_at', { ascending: false }),
     user ? supabase.from('broadcast_settings').select('*').eq('id', 'main').maybeSingle() : Promise.resolve({data:null,error:null}),
-    user ? supabase.from('user_roles').select('role').eq('user_id', user.id) : Promise.resolve({ data: [] }),
-    user ? supabase.from('profiles').select('*') : Promise.resolve({ data: [] }),
+    account,
     supabase.from('app_content').select('*'),
     user ? supabase.from('payment_records').select('*') : Promise.resolve({data:[]}),
   ]);
@@ -82,8 +105,6 @@ export async function refreshCloud() {
     return { id:n.id, headline:n.headline, script:n.script, category:n.category as NewsArticle['category'], districtId:n.district_id, constituency:n.constituency, reporterId:n.reporter_id, createdAt:n.created_at, status:n.status as NewsStatus, importance:n.importance as NewsArticle['importance'], image:n.image || IMAGES.farmer, clips:{location:!!paths.location,anchor:!!paths.anchor,byte1:!!paths.byte1,byte2:!!paths.byte2}, clipPaths:paths, clipUrls, urgent:n.urgent, aiVoice:n.ai_voice, views:n.views, feedback:n.feedback ?? undefined };
   }));
   if (version !== refreshVersion) return;
-  const assigned = roles.data ?? [];
-  const role: Role = assigned.some((r) => r.role === 'admin') ? 'admin' : assigned.some((r) => r.role === 'editor') ? 'editor' : user ? 'journalist' : 'public';
   set(() => ({ userId:user?.id ?? null, ready:true, role, news:mapped,
     breaking:(breaking.data ?? []).map((b) => ({id:b.id,text:b.text,region:b.region,minutes:b.minutes,createdAt:b.created_at})),
     journalists:(profiles.data ?? []).map((p) => ({id:p.id,name:p.name,role:'पत्रकार',districtId:p.district_id,constituencyId:p.constituency,avatar:p.avatar,code:'',phone:p.phone,email:p.contact_email,rating:0,submitted:mapped.filter(n=>n.reporterId===p.id).length,approved:mapped.filter(n=>n.reporterId===p.id && ['approved','broadcasted'].includes(n.status)).length,status:'verified' as const})),

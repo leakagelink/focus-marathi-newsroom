@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import { ArrowLeft, CheckCircle2, CloudUpload, Loader2, Play, Upload, Wallet, X, FileVideo, ListChecks, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { Glass, GlowButton, Logo, Pill, inputCls } from "@/components/ui/glass";
-import { actions, earnings, useStore } from "@/lib/store";
+import { actions, earnings, refreshCloud, useStore } from "@/lib/store";
 import { CONSTITUENCIES, DISTRICTS, districtName } from "@/data/maharashtra";
 import { CATEGORIES, IMAGES, SAMPLE_VIDEOS } from "@/data/mock";
 import type { Category, ClipType, NewsStatus } from "@/types";
@@ -24,13 +24,14 @@ type JTab = "upload" | "list" | "earn" | "profile";
 export function JournalistApp() {
   const userId = useStore(s => s.userId);
   const ready = useStore(s => s.ready);
+  const profileError = useStore(s => s.profileError);
   const [tab, setTab] = useState<JTab>("upload");
   const [history, setHistory] = useState<JTab[]>([]);
   const me = useStore((s) => s.journalists.find((j) => j.id === userId));
   const mine = useStore((s) => s.news.filter((n) => n.reporterId === userId));
   if (!ready) return <p className="p-4">कृपया थांबा…</p>;
   if (!userId) return <AccountForm />;
-  if (!me) return <p className="p-4">प्रोफाइल लोड होत आहे…</p>;
+  if (!me) return profileError ? <div className="space-y-3 p-4" role="alert"><p>प्रोफाइल लोड झाली नाही.</p><Button onClick={() => void refreshCloud()}>पुन्हा प्रयत्न करा</Button></div> : <p className="p-4">प्रोफाइल लोड होत आहे…</p>;
   // In-app back: previous section first, and the login screen once at the start.
   const go = (k: JTab) => { setHistory((h) => [...h, tab]); setTab(k); };
   const back = () => {
