@@ -1,4 +1,5 @@
 # Live backend
+- [ ] Expand admin control: journalist details, approval-first publication, and add/edit/manage/delete; confirm which app sections full management includes.
 - [x] Add text-only submission and device-powered news listening without AI credits or API calls; validation and speech-control tests pass. Actual installed-phone audio remains unverified because the test browser has no Marathi/Hindi voice.
 - [x] Persist news, moderation, breaking news and broadcast settings with protected access.
 - [x] Replace demo login with real accounts, profiles and private video uploads.
