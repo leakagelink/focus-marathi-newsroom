@@ -28,3 +28,8 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+- Cloud Auth owns account identity; roles live in protected user_roles and database policies authorize every news/moderation/storage write, so browser UI cannot grant privileges.
+- Cloud news, breaking news and broadcast settings replace demo rows; private clip paths are signed for authorized readers, so pending reports stay private.
+- A single root auth subscription refreshes the browser store after identity changes; generation guards discard outdated refreshes, preventing stale private state after sign-out.
+- New accounts receive only journalist access; owner administrator access must be assigned to a verified, explicitly identified account, never the first signup.

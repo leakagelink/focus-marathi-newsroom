@@ -28,6 +28,7 @@ export function PublicApp() {
   const ads = useStore((s) => s.ads.filter((a) => a.active));
   const bulletin = useStore((s) => s.bulletin);
   const published = useStore((s) => s.bulletinPublished);
+  const onAir = useStore(s => s.onAir);
   const nowPlaying = useStore((s) => s.news.find((n) => n.id === s.nowPlaying));
   useEffect(() => { const t = setTimeout(() => setSplash(false), 1800); return () => clearTimeout(t); }, []);
 
@@ -74,12 +75,10 @@ export function PublicApp() {
       {(tab === "Home" || tab === "Live TV" || tab === "महाराष्ट्र") && (
         <div className="space-y-3 px-3">
           <div className="relative overflow-hidden rounded-2xl border border-primary/40">
-            {tab === "Live TV"
-              ? <video src={SAMPLE_VIDEOS[0]} autoPlay muted loop playsInline className="aspect-video w-full object-cover" />
-              : <img src={IMAGES.studio} alt="Live studio" className="aspect-video w-full object-cover" />}
-            <div className="absolute right-2 top-2"><LiveDot /></div>
+            <img src={IMAGES.studio} alt="FOCUS 24 studio preview" className="aspect-video w-full object-cover" />
+            <div className="absolute right-2 top-2"><Pill tone="gray">प्रसारण जोडलेले नाही</Pill></div>
             <div className="absolute bottom-0 inset-x-0 bg-linear-to-t from-background/90 p-2 text-xs font-semibold">
-              {nowPlaying ? `आता प्रसारित: ${nowPlaying.headline}` : "24×7 LIVE NEWS · FOCUS 24 NEWS मराठी"}
+              {nowPlaying ? nowPlaying.headline : "FOCUS 24 NEWS मराठी"}
             </div>
           </div>
           <Ticker items={breaking.map((b) => b.text)} />
@@ -160,7 +159,7 @@ function Detail({ n, onBack, adName }: { n: NewsArticle; onBack: () => void; adN
         <h2 className="flex-1 text-center font-bold">बातमीचा तपशील</h2>
         <span className="w-8" />
       </div>
-      <video key={clip} src={SAMPLE_VIDEOS[clip]} poster={n.image} controls autoPlay muted playsInline className="aspect-video w-full rounded-xl object-cover" />
+      <video key={clip} src={n.clipUrls?.[(['location','anchor','byte1','byte2'] as const)[clip] ?? 'location']} poster={n.image} controls autoPlay muted playsInline className="aspect-video w-full rounded-xl object-cover" />
       <h1 className="text-lg font-bold leading-snug">{n.headline}</h1>
       <div className="flex flex-wrap gap-1.5 text-[11px]">
         <Pill><MapPin className="size-3" />{districtName(n.districtId)}</Pill><Pill><Landmark className="size-3" />{n.constituency}</Pill>

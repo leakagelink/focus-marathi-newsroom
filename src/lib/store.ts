@@ -61,7 +61,7 @@ export async function refreshCloud() {
   const [news, breaking, settings, roles, profiles] = await Promise.all([
     supabase.from('news').select('*').order('created_at', { ascending: false }).limit(500),
     supabase.from('breaking_news').select('*').order('created_at', { ascending: false }),
-    supabase.from('broadcast_settings').select('*').eq('id', 'main').maybeSingle(),
+    user ? supabase.from('broadcast_settings').select('*').eq('id', 'main').maybeSingle() : Promise.resolve({data:null,error:null}),
     user ? supabase.from('user_roles').select('role').eq('user_id', user.id) : Promise.resolve({ data: [] }),
     user ? supabase.from('profiles').select('*') : Promise.resolve({ data: [] }),
   ]);
@@ -110,7 +110,8 @@ export const actions = {
     await refreshCloud(); return data.id;
   },
   updateNews: async (id: string, patch: Partial<NewsArticle>) => {
-    try { await checked(supabase.from('news').update({headline:patch.headline,script:patch.script,importance:patch.importance}).eq('id',id).select('id').single()); set(s=>({news:s.news.map(n=>n.id===id?{...n,...patch}:n)})); } catch {}
+    const values = { ...(patch.headline !== undefined ? {headline:patch.headline}:{}), ...(patch.script !== undefined ? {script:patch.script}:{}), ...(patch.importance !== undefined ? {importance:patch.importance}:{}) };
+    try { await checked(supabase.from('news').update(values).eq('id',id).select('id').single()); set(s=>({news:s.news.map(n=>n.id===id?{...n,...patch}:n)})); } catch {}
   },
   setStatus: async (id: string, status: NewsStatus, feedback?: string) => {
     try { await checked(supabase.from('news').update({status,feedback:feedback ?? null}).eq('id',id).select('id').single()); await refreshCloud(); toast.success('बातमीची स्थिती जतन झाली'); } catch {} return;
