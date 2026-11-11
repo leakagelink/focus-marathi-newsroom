@@ -1,10 +1,15 @@
 import { useRef, useSyncExternalStore } from "react";
 import { toast } from "sonner";
-import { ADS, BREAKING, JOURNALISTS, NEWS, PAYMENTS } from "@/data/mock";
+
 import type { Advertisement, BreakingNews, Journalist, NewsArticle, NewsStatus, Payment, Role } from "@/types";
+import { supabase } from '@/integrations/supabase/client';
+import { submissionSchema } from './news-validation';
+import { IMAGES } from '@/data/mock';
 
 export type Source = "studio" | "field" | "superfast" | "ads" | "standby";
 export interface State {
+  userId: string | null;
+  ready: boolean;
   role: Role;
   news: NewsArticle[];
   breaking: BreakingNews[];
@@ -23,13 +28,14 @@ export interface State {
 }
 
 let state: State = {
-  role: "admin",
-  news: NEWS, breaking: BREAKING, ads: ADS, journalists: JOURNALISTS, payments: PAYMENTS,
-  bulletin: NEWS.filter((n) => n.status === "approved" || n.status === "broadcasted").map((n) => n.id),
-  bulletinPublished: false, onAir: true, source: "studio",
+  userId: null, ready: false,
+  role: "public",
+  news: [], breaking: [], ads: [], journalists: [], payments: [],
+  bulletin: [],
+  bulletinPublished: false, onAir: false, source: "standby",
   overlays: { breaking: true, reporter: true, headline: false, helpline: false, logo: true },
   platforms: { app: true, youtube: true, facebook: false, ott: true },
-  liveViewers: 18432, notifications: [],
+  liveViewers: 0, notifications: [],
 };
 const subs = new Set<() => void>();
 const set = (fn: (s: State) => Partial<State>) => { state = { ...state, ...fn(state) }; subs.forEach((f) => f()); };
@@ -48,42 +54,81 @@ export function useStore<T>(sel: (s: State) => T): T {
 const notify = (kind: State["notifications"][number]["kind"], text: string) =>
   set((s) => ({ notifications: [{ id: crypto.randomUUID(), kind, text, at: new Date().toISOString() }, ...s.notifications].slice(0, 30) }));
 
-export const actions = {
-  setRole: (role: Role) => set(() => ({ role })),
-  submitNews: (n: NewsArticle) => {
-    set((s) => ({ news: [n, ...s.news] }));
-  },
-  updateNews: (id: string, patch: Partial<NewsArticle>) =>
-    set((s) => ({ news: s.news.map((n) => (n.id === id ? { ...n, ...patch } : n)) })),
-  setStatus: (id: string, status: NewsStatus, feedback?: string) => {
-    const n = state.news.find((x) => x.id === id);
-    set((s) => ({
-      news: s.news.map((x) => (x.id === id ? { ...x, status, feedback, views: status === "approved" ? 1200 : x.views } : x)),
-      bulletin: status === "approved" && !s.bulletin.includes(id) ? [...s.bulletin, id] : s.bulletin,
+let refreshVersion = 0;
+export async function refreshCloud() {
+  const version = ++refreshVersion;
+  const { data: { user } } = await supabase.auth.getUser();
+  const [news, breaking, settings, roles, profiles] = await Promise.all([
+    supabase.from('news').select('*').order('created_at', { ascending: false }).limit(500),
+    supabase.from('breaking_news').select('*').order('created_at', { ascending: false }),
+    supabase.from('broadcast_settings').select('*').eq('id', 'main').maybeSingle(),
+    user ? supabase.from('user_roles').select('role').eq('user_id', user.id) : Promise.resolve({ data: [] }),
+    user ? supabase.from('profiles').select('*') : Promise.resolve({ data: [] }),
+  ]);
+  if (version !== refreshVersion) return;
+  if (news.error || breaking.error || settings.error) { toast.error('डेटा लोड झाला नाही. पुन्हा प्रयत्न करा.'); return; }
+  const mapped: NewsArticle[] = await Promise.all((news.data ?? []).map(async (n) => {
+    const paths = n.clip_paths as Partial<Record<import('@/types').ClipType, string>>;
+    const clipUrls: Partial<Record<import('@/types').ClipType, string>> = {};
+    await Promise.all(Object.entries(paths).map(async ([key, path]) => {
+      if (!path) return;
+      const { data } = await supabase.storage.from('news-clips').createSignedUrl(path, 3600);
+      if (data) clipUrls[key as import('@/types').ClipType] = data.signedUrl;
     }));
-    const rep = state.journalists.find((j) => j.id === n?.reporterId);
-    if (status === "approved") {
-      notify("whatsapp", `WhatsApp → ${rep?.name}: तुमची बातमी "${n?.headline}" मंजूर झाली ✅`);
-      toast.success("बातमी मंजूर व प्रकाशित", { description: `WhatsApp सूचना ${rep?.name} यांना पाठवली` });
-    } else if (status === "broadcasted") {
-      set(() => ({ nowPlaying: id }));
-      toast.success("प्रसारण रांगेत पाठवली", { description: "Broadcast Studio मध्ये ON AIR" });
-    } else if (status === "rejected") toast.error("बातमी नाकारली", { description: feedback });
-    else if (status === "revision") toast.warning("पुनर्लेखन विनंती पाठवली", { description: feedback });
+    return { id:n.id, headline:n.headline, script:n.script, category:n.category as NewsArticle['category'], districtId:n.district_id, constituency:n.constituency, reporterId:n.reporter_id, createdAt:n.created_at, status:n.status as NewsStatus, importance:n.importance as NewsArticle['importance'], image:n.image || IMAGES.farmer, clips:{location:!!paths.location,anchor:!!paths.anchor,byte1:!!paths.byte1,byte2:!!paths.byte2}, clipPaths:paths, clipUrls, urgent:n.urgent, aiVoice:n.ai_voice, views:n.views, feedback:n.feedback ?? undefined };
+  }));
+  if (version !== refreshVersion) return;
+  const assigned = roles.data ?? [];
+  const role: Role = assigned.some((r) => r.role === 'admin') ? 'admin' : assigned.some((r) => r.role === 'editor') ? 'editor' : user ? 'journalist' : 'public';
+  set(() => ({ userId:user?.id ?? null, ready:true, role, news:mapped,
+    breaking:(breaking.data ?? []).map((b) => ({id:b.id,text:b.text,region:b.region,minutes:b.minutes,createdAt:b.created_at})),
+    journalists:(profiles.data ?? []).map((p) => ({id:p.id,name:p.name,role:'पत्रकार',districtId:p.district_id,constituencyId:p.constituency,avatar:p.avatar,code:'',phone:'',email:'',rating:0,submitted:mapped.filter(n=>n.reporterId===p.id).length,approved:mapped.filter(n=>n.reporterId===p.id && ['approved','broadcasted'].includes(n.status)).length,status:'verified' as const})),
+    ...(settings.data?.data as Partial<Pick<State,'onAir'|'source'|'overlays'|'platforms'|'nowPlaying'|'bulletin'|'bulletinPublished'>> ?? {}),
+  }));
+}
+
+const checked = async (request: PromiseLike<{error: {message:string} | null}>) => {
+  const result = await request;
+  if (result.error) { toast.error(result.error.message); throw new Error(result.error.message); }
+};
+const saveBroadcast = async (patch: Partial<State>) => {
+  try {
+    const next = {...state, ...patch};
+    await checked(supabase.from('broadcast_settings').upsert({id:'main',data:{onAir:next.onAir,source:next.source,overlays:next.overlays,platforms:next.platforms,nowPlaying:next.nowPlaying ?? null,bulletin:next.bulletin,bulletinPublished:next.bulletinPublished}}));
+    set(() => patch);
+  } catch { /* Error shown by checked; do not pretend the setting saved. */ }
+};
+
+export const actions = {
+  setRole: (_role: Role) => {},
+  submitNews: async (n: NewsArticle) => {
+    if (!state.userId) throw new Error('लॉगिन करा');
+    const input = submissionSchema.parse({ ...n, clipPaths:n.clipPaths });
+    if (Object.values(input.clipPaths).some(p => !p.startsWith(`${state.userId}/`))) throw new Error('अवैध क्लिप');
+    const {data,error} = await supabase.from('news').insert({reporter_id:state.userId,headline:input.headline,script:input.script,category:input.category,district_id:input.districtId,constituency:input.constituency,clip_paths:input.clipPaths,ai_voice:input.aiVoice}).select('id').single();
+    if(error) throw error;
+    await refreshCloud(); return data.id;
   },
-  addBreaking: (b: Omit<BreakingNews, "id" | "createdAt">, push: boolean) => {
-    set((s) => ({ breaking: [{ ...b, id: crypto.randomUUID(), createdAt: new Date().toISOString() }, ...s.breaking] }));
-    if (push) { notify("push", `🔴 ${b.text}`); toast("🔴 Push notification पाठवली", { description: `${b.region} · 2.4 लाख डिव्हाइस` }); }
+  updateNews: async (id: string, patch: Partial<NewsArticle>) => {
+    try { await checked(supabase.from('news').update({headline:patch.headline,script:patch.script,importance:patch.importance}).eq('id',id).select('id').single()); set(s=>({news:s.news.map(n=>n.id===id?{...n,...patch}:n)})); } catch {}
   },
-  removeBreaking: (id: string) => set((s) => ({ breaking: s.breaking.filter((b) => b.id !== id) })),
-  editBreaking: (id: string, text: string) => set((s) => ({ breaking: s.breaking.map((b) => (b.id === id ? { ...b, text } : b)) })),
-  setBulletin: (ids: string[]) => set(() => ({ bulletin: ids, bulletinPublished: false })),
-  publishBulletin: () => { set(() => ({ bulletinPublished: true })); toast.success("सुपरफास्ट 100 प्रकाशित", { description: "Public App + YouTube export रांगेत" }); },
-  setOnAir: (onAir: boolean) => set(() => ({ onAir })),
-  setSource: (source: Source) => set(() => ({ source })),
-  toggleOverlay: (k: keyof State["overlays"]) => set((s) => ({ overlays: { ...s.overlays, [k]: !s.overlays[k] } })),
-  togglePlatform: (k: keyof State["platforms"]) => set((s) => ({ platforms: { ...s.platforms, [k]: !s.platforms[k] } })),
-  setNowPlaying: (id?: string) => set(() => ({ nowPlaying: id })),
+  setStatus: async (id: string, status: NewsStatus, feedback?: string) => {
+    try { await checked(supabase.from('news').update({status,feedback:feedback ?? null}).eq('id',id).select('id').single()); await refreshCloud(); toast.success('बातमीची स्थिती जतन झाली'); } catch {} return;
+
+  },
+  addBreaking: async (b: Omit<BreakingNews, "id" | "createdAt">, push: boolean) => {
+    try { await checked(supabase.from('breaking_news').insert(b)); await refreshCloud(); toast.success('ब्रेकिंग बातमी जतन झाली'); } catch {} return;
+
+  },
+  removeBreaking: async (id: string) => { try { await checked(supabase.from('breaking_news').delete().eq('id',id).select('id').single()); await refreshCloud(); } catch {} },
+  editBreaking: async (id: string, text: string) => { try { await checked(supabase.from('breaking_news').update({text}).eq('id',id).select('id').single()); await refreshCloud(); } catch {} },
+  setBulletin: (ids: string[]) => saveBroadcast({ bulletin: ids, bulletinPublished: false }),
+  publishBulletin: () => saveBroadcast({ bulletinPublished: true }),
+  setOnAir: (onAir: boolean) => saveBroadcast({ onAir }),
+  setSource: (source: Source) => saveBroadcast({ source }),
+  toggleOverlay: (k: keyof State["overlays"]) => saveBroadcast({ overlays: { ...state.overlays, [k]: !state.overlays[k] } }),
+  togglePlatform: (k: keyof State["platforms"]) => saveBroadcast({ platforms: { ...state.platforms, [k]: !state.platforms[k] } }),
+  setNowPlaying: (id?: string) => saveBroadcast({ nowPlaying: id }),
   tickViewers: () => set((s) => ({ liveViewers: Math.max(9000, s.liveViewers + Math.round((Math.random() - 0.45) * 220)) })),
   addAd: (a: Advertisement) => { set((s) => ({ ads: [a, ...s.ads] })); toast.success("मोहीम तयार झाली"); },
   updateAd: (id: string, p: Partial<Advertisement>) => set((s) => ({ ads: s.ads.map((a) => (a.id === id ? { ...a, ...p } : a)) })),

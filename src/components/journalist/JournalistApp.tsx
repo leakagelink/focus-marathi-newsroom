@@ -1,11 +1,14 @@
 import { useMemo, useRef, useState } from "react";
-import { ArrowLeft, CheckCircle2, CloudUpload, Loader2, Play, Upload, Wallet, X, FileVideo, ListChecks } from "lucide-react";
+import { ArrowLeft, CheckCircle2, CloudUpload, Loader2, Play, Upload, Wallet, X, FileVideo, ListChecks, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { Glass, GlowButton, Logo, Pill, inputCls } from "@/components/ui/glass";
 import { actions, earnings, useStore } from "@/lib/store";
 import { CONSTITUENCIES, DISTRICTS, districtName } from "@/data/maharashtra";
 import { CATEGORIES, IMAGES, SAMPLE_VIDEOS } from "@/data/mock";
 import type { Category, ClipType, NewsStatus } from "@/types";
+import { AccountForm } from '@/components/AccountForm';
+import { supabase } from '@/integrations/supabase/client';
+import { BackButton } from '@/components/BackButton';
 
 const CLIPS: { k: ClipType; t: string; d: string; sec: string }[] = [
   { k: "location", t: "Location Visual", d: "10 सेकंद", sec: "0:10" },
@@ -17,19 +20,22 @@ const ME = "j1";
 type JTab = "upload" | "list" | "earn";
 
 export function JournalistApp() {
-  const [authed, setAuthed] = useState(false);
+  const userId = useStore(s => s.userId);
+  const ready = useStore(s => s.ready);
   const [tab, setTab] = useState<JTab>("upload");
   const [history, setHistory] = useState<JTab[]>([]);
-  const me = useStore((s) => s.journalists.find((j) => j.id === ME)!);
-  const mine = useStore((s) => s.news.filter((n) => n.reporterId === ME));
-  if (!authed) return <Login onDone={() => setAuthed(true)} />;
+  const me = useStore((s) => s.journalists.find((j) => j.id === userId));
+  const mine = useStore((s) => s.news.filter((n) => n.reporterId === userId));
+  if (!ready) return <p className="p-4">कृपया थांबा…</p>;
+  if (!userId) return <AccountForm />;
+  if (!me) return <p className="p-4">प्रोफाइल लोड होत आहे…</p>;
   // In-app back: previous section first, and the login screen once at the start.
   const go = (k: JTab) => { setHistory((h) => [...h, tab]); setTab(k); };
   const back = () => {
     const prev = history.at(-1);
     setHistory((h) => h.slice(0, -1));
     if (prev) setTab(prev);
-    else setAuthed(false);
+    else setTab('upload');
   };
   return (
     <div className="flex min-h-full flex-col">
@@ -40,17 +46,17 @@ export function JournalistApp() {
         <span className="w-8" />
       </div>
       <Glass className="flex items-center gap-3 p-3">
-        <img src={me.avatar} alt="" className="size-12 rounded-full" />
+        <UserRound className="size-10 text-neon" />
         <div className="flex-1 text-xs">
           <div className="text-sm font-bold">{me.name}</div>
           <div className="text-muted-foreground">{me.role}</div>
-          <div className="text-faint">{me.code} (कराड दक्षिण) · {districtName(me.districtId)}</div>
+          <div className="text-faint">{me.districtId ? districtName(me.districtId) : 'जिल्हा निवडलेला नाही'}</div>
         </div>
         <Pill tone="green">सक्रिय</Pill>
       </Glass>
       <div className="grid grid-cols-2 gap-2">
-        <Glass className="p-2.5 text-center"><div className="text-xl font-bold">{me.submitted + mine.length - 3}</div><div className="text-[10px] text-muted-foreground">एकूण सबमिट</div></Glass>
-        <Glass red className="p-2.5 text-center"><div className="text-xl font-bold">{me.approved + mine.filter((n) => n.status === "approved").length}</div><div className="text-[10px] text-muted-foreground">मंजूर बातम्या</div></Glass>
+        <Glass className="p-2.5 text-center"><div className="text-xl font-bold">{mine.length}</div><div className="text-[10px] text-muted-foreground">एकूण सबमिट</div></Glass>
+        <Glass red className="p-2.5 text-center"><div className="text-xl font-bold">{mine.filter((n) => ['approved','broadcasted'].includes(n.status)).length}</div><div className="text-[10px] text-muted-foreground">मंजूर बातम्या</div></Glass>
       </div>
       {tab === "upload" && <UploadForm onDone={() => setTab("list")} />}
       {tab === "list" && <MyUploads />}
@@ -65,28 +71,9 @@ export function JournalistApp() {
   );
 }
 
-function Login({ onDone }: { onDone: () => void }) {
-  const [phone, setPhone] = useState("98220 14411");
-  const [sent, setSent] = useState(false);
-  const [otp, setOtp] = useState("");
-  return (
-    <div className="flex h-full flex-col justify-center gap-4 px-6">
-      <div className="text-center"><Logo size="md" /><p className="mt-2 text-xs text-muted-foreground">पत्रकार लॉगिन</p></div>
-      <Glass className="space-y-3 p-4">
-        <label className="text-xs text-muted-foreground">मोबाइल नंबर</label>
-        <input className={inputCls} value={phone} onChange={(e) => setPhone(e.target.value)} />
-        {sent && <><label className="text-xs text-muted-foreground">OTP (डेमो: 1234)</label>
-          <input className={inputCls} value={otp} maxLength={4} onChange={(e) => setOtp(e.target.value)} placeholder="••••" /></>}
-        <GlowButton className="w-full" onClick={() => {
-          if (!sent) { if (phone.replace(/\D/g, "").length < 10) { toast.error("वैध मोबाइल नंबर टाका"); return; } setSent(true); toast("OTP पाठवला: 1234"); }
-          else if (otp === "1234") onDone(); else toast.error("चुकीचा OTP");
-        }}>{sent ? "लॉगिन करा" : "OTP पाठवा"}</GlowButton>
-      </Glass>
-    </div>
-  );
-}
-
 function UploadForm({ onDone }: { onDone: () => void }) {
+  const userId = useStore(s => s.userId);
+  const paths = useRef<Partial<Record<ClipType,string>>>({});
   const [prog, setProg] = useState<Record<ClipType, number>>({ location: 0, anchor: 0, byte1: 0, byte2: 0 });
   const [preview, setPreview] = useState<{ k: ClipType; url: string } | null>(null);
   const [urls, setUrls] = useState<Partial<Record<ClipType, string>>>({});
@@ -103,32 +90,38 @@ function UploadForm({ onDone }: { onDone: () => void }) {
   const pending = useRef<ClipType | null>(null);
   const words = script.trim() ? script.trim().split(/\s+/).length : 0;
 
-  const startUpload = (k: ClipType, url: string) => {
-    setUrls((u) => ({ ...u, [k]: url }));
-    let p = 0;
-    const t = setInterval(() => { p += 12 + Math.random() * 18; setProg((s) => ({ ...s, [k]: Math.min(100, p) })); if (p >= 100) clearInterval(t); }, 180);
+  const startUpload = async (k: ClipType, file: File) => {
+    if (!userId) return;
+    if (!file.type.startsWith('video/')) { toast.error('व्हिडिओ फाइल निवडा'); return; }
+    setProg(s => ({...s,[k]:1}));
+    const path = `${userId}/${crypto.randomUUID()}/${k}.${file.name.split('.').pop()?.replace(/[^a-zA-Z0-9]/g,'') || 'mp4'}`;
+    const {error} = await supabase.storage.from('news-clips').upload(path,file,{contentType:file.type});
+    if(error) { setProg(s=>({...s,[k]:0})); toast.error(error.message); return; }
+    paths.current[k]=path;
+    const {data} = await supabase.storage.from('news-clips').createSignedUrl(path,3600);
+    setUrls(u=>({...u,[k]:data?.signedUrl})); setProg(s=>({...s,[k]:100}));
   };
   const pick = (k: ClipType) => { pending.current = k; fileRef.current?.click(); };
 
-  const submit = () => {
+  const submit = async () => {
     const missing = CLIPS.filter((c) => prog[c.k] < 100);
     if (missing.length) { toast.error(`अनिवार्य क्लिप बाकी: ${missing.map((m) => m.t).join(", ")}`); return; }
     if (headline.trim().length < 10) { toast.error("कृपया बातमीचे शीर्षक टाका"); return; }
-    if (words < 20) { toast.error("स्क्रिप्ट किमान 80 शब्दांची असावी (डेमोसाठी 20+)"); return; }
+    if (words < 80 || words > 100) { toast.error("स्क्रिप्ट 80 ते 100 शब्दांची असावी"); return; }
     setBusy(true);
-    setTimeout(() => {
-      const id = `F24-${1043 + Math.floor(Math.random() * 900)}`;
-      actions.submitNews({ id, headline: headline.trim(), script: script.trim(), category: cat, districtId: district, constituency: seat, reporterId: ME,
+    try {
+      const id = await actions.submitNews({ id:'', headline: headline.trim(), script: script.trim(), category: cat, districtId: district, constituency: seat, reporterId: userId ?? '', clipPaths:paths.current,
         createdAt: new Date().toISOString(), status: "pending", importance: "normal", image: IMAGES.farmer,
         clips: { location: true, anchor: true, byte1: true, byte2: true }, urgent: false, aiVoice: ai, views: 0 });
-      setBusy(false); setDone(id);
-    }, 1600);
+      setDone(id);
+    } catch(e) { toast.error(e instanceof Error ? e.message : 'अपलोड अयशस्वी'); }
+    finally { setBusy(false); }
   };
 
   return (
     <div className="space-y-3">
       <h3 className="font-bold">नवीन बातमी अपलोड करा</h3>
-      <input ref={fileRef} type="file" accept="video/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f && pending.current) startUpload(pending.current, URL.createObjectURL(f)); e.target.value = ""; }} />
+      <input ref={fileRef} type="file" accept="video/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f && pending.current) void startUpload(pending.current, f); e.target.value = ""; }} />
       {CLIPS.map((c, i) => {
         const p = prog[c.k];
         return (
@@ -138,14 +131,13 @@ function UploadForm({ onDone }: { onDone: () => void }) {
               {p > 0 && p < 100 && <div className="mt-1 h-1 overflow-hidden rounded bg-glass"><div className="h-full bg-primary transition-all" style={{ width: `${p}%` }} /></div>}
             </div>
             {p >= 100 ? (
-              <button onClick={() => setPreview({ k: c.k, url: urls[c.k]! })} className="relative">
+              <button onClick={() => { const url=urls[c.k]; if(url) setPreview({ k:c.k,url }); }} className="relative">
                 <img src={IMAGES.farmer} alt="" className="h-11 w-16 rounded-md object-cover" /><Play className="absolute inset-0 m-auto size-4" />
                 <span className="absolute bottom-0 right-0 rounded bg-background/80 px-1 text-[8px]">▶ {c.sec}</span>
               </button>
             ) : (
               <div className="flex gap-1">
                 <button onClick={() => pick(c.k)} className="glass rounded-lg px-2 py-1.5 text-[10px]"><Upload className="inline size-3" /> फाइल</button>
-                <button onClick={() => startUpload(c.k, SAMPLE_VIDEOS[i] ?? "")} className="rounded-lg bg-primary/20 px-2 py-1.5 text-[10px] text-neon">डेमो</button>
               </div>
             )}
             {p >= 100 && <CheckCircle2 className="size-5 text-success" />}
@@ -154,7 +146,7 @@ function UploadForm({ onDone }: { onDone: () => void }) {
       })}
       <input className={inputCls} placeholder="बातमीचे शीर्षक" value={headline} onChange={(e) => setHeadline(e.target.value)} maxLength={120} />
       <div className="grid grid-cols-2 gap-2">
-        <select className={`${inputCls} bg-card`} value={district} onChange={(e) => { setDistrict(e.target.value); setSeat(CONSTITUENCIES.find((c) => c.districtId === e.target.value)!.name); }}>
+        <select className={`${inputCls} bg-card`} value={district} onChange={(e) => { setDistrict(e.target.value); setSeat(CONSTITUENCIES.find((c) => c.districtId === e.target.value)?.name ?? ''); }}>
           {DISTRICTS.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
         </select>
         <select className={`${inputCls} bg-card`} value={seat} onChange={(e) => setSeat(e.target.value)}>
@@ -171,7 +163,7 @@ function UploadForm({ onDone }: { onDone: () => void }) {
         </div>
       </div>
       <Glass className="flex items-center justify-between p-3 text-xs">
-        <span>🎙️ AI महिला आवाज वापरा (मराठी)</span>
+        <span>🎙️ AI आवाज विनंती (निर्मिती अद्याप जोडलेली नाही)</span>
         <button onClick={() => setAi(!ai)} className={`h-6 w-11 rounded-full p-0.5 transition ${ai ? "bg-primary" : "bg-glass"}`}><span className={`block size-5 rounded-full bg-foreground transition ${ai ? "translate-x-5" : ""}`} /></button>
       </Glass>
       <GlowButton className="w-full py-3 text-base" onClick={submit} disabled={busy}>
@@ -210,7 +202,7 @@ export { statusMeta };
 
 function MyUploads() {
   const [f, setF] = useState<NewsStatus | "all">("all");
-  const mine = useStore((s) => s.news.filter((n) => n.reporterId === ME));
+  const mine = useStore((s) => s.news.filter((n) => n.reporterId === s.userId));
   const list = mine.filter((n) => f === "all" || n.status === f || (f === "rejected" && n.status === "revision"));
   return (
     <div className="space-y-2">
@@ -232,7 +224,8 @@ function MyUploads() {
 }
 
 function Earnings() {
-  const p = useStore((s) => s.payments.find((x) => x.journalistId === ME)!);
+  const p = useStore((s) => s.payments.find((x) => x.journalistId === s.userId));
+  if (!p) return <Glass className="p-4 text-sm">मानधन नोंद उपलब्ध नाही. पेमेंट सेवा अद्याप जोडलेली नाही.</Glass>;
   return (
     <Glass red className="space-y-2 p-4 text-sm">
       <div className="font-bold">मासिक कमाई · {p.month}</div>

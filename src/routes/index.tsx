@@ -7,6 +7,8 @@ import { Glass, Logo } from "@/components/ui/glass";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "FOCUS 24 NEWS मराठी — महाराष्ट्राचे डिजिटल न्यूज नेटवर्क" },
       { name: "description", content: "महाराष्ट्राच्या 288 विधानसभा क्षेत्रांतील ताज्या मराठी बातम्या, 24×7 लाईव्ह टीव्ही आणि सुपरफास्ट 100." },
       { property: "og:title", content: "FOCUS 24 NEWS मराठी" },

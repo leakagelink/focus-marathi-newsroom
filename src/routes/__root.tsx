@@ -9,7 +9,9 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { Logo } from "@/components/ui/glass";
 import { BackButton, canGoBack } from "@/components/BackButton";
-import { actions, useStore } from "@/lib/store";
+import { actions, useStore, refreshCloud } from "@/lib/store";
+import { supabase } from '@/integrations/supabase/client';
+import { GlowButton } from '@/components/ui/glass';
 import type { Role } from "@/types";
 
 function NotFoundComponent() {
@@ -90,6 +92,20 @@ const roles: { id: Role; label: string }[] = [
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const role = useStore((s) => s.role);
+  const userId = useStore((s) => s.userId);
+  const router = useRouter();
+  useEffect(() => {
+    void refreshCloud();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (!['SIGNED_IN','SIGNED_OUT','USER_UPDATED'].includes(event)) return;
+      if (event === 'SIGNED_OUT') queryClient.clear();
+      setTimeout(() => { void refreshCloud(); void router.invalidate(); }, 0);
+    });
+    const refresh = () => { void refreshCloud(); };
+    window.addEventListener('focus', refresh);
+    const interval = window.setInterval(refresh, 60000);
+    return () => { subscription.unsubscribe(); window.removeEventListener('focus',refresh); window.clearInterval(interval); };
+  }, [queryClient, router]);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   // Nothing sits behind the home screen on a fresh open, so no back button there.
   // The history check only runs in the browser, so the first render matches the server.
@@ -124,13 +140,7 @@ function RootComponent() {
               </Link>
             ))}
           </nav>
-          <label className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
-            <span className="hidden md:inline">Demo Role</span>
-            <select value={role} onChange={(e) => actions.setRole(e.target.value as Role)}
-              aria-label="Demo Role" className="w-16 rounded-lg glass bg-card px-1 py-1 text-[11px] sm:w-auto sm:px-1.5 sm:text-xs text-foreground sm:w-auto">
-              {roles.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
-            </select>
-          </label>
+          {userId ? <GlowButton variant="ghost" className="shrink-0 px-2 text-[10px] sm:text-xs" onClick={async () => { await queryClient.cancelQueries(); queryClient.clear(); await supabase.auth.signOut(); await router.navigate({to:'/journalist',replace:true}); }}>लॉगआउट</GlowButton> : <Link to="/journalist" className="shrink-0 text-[10px] sm:text-xs">लॉगिन</Link>}
         </div>
       </header>
       <Outlet />

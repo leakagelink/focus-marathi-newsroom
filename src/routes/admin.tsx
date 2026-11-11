@@ -5,10 +5,13 @@ import { BackButton } from "@/components/BackButton";
 import { Glass, GlowButton, Pill, Stat, inputCls } from "@/components/ui/glass";
 import { actions, useStore } from "@/lib/store";
 import { districtName } from "@/data/maharashtra";
+import { AccountForm } from '@/components/AccountForm';
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Admin Dashboard — FOCUS 24 NEWS" },
       { name: "description", content: "FOCUS 24 NEWS संपादकीय मंजुरी, ब्रेकिंग न्यूज आणि नेटवर्क नियंत्रण." },
       { property: "og:title", content: "Admin Dashboard — FOCUS 24 NEWS" },
@@ -19,6 +22,9 @@ export const Route = createFileRoute("/admin")({
 });
 
 function Admin() {
+  const userId = useStore(s => s.userId);
+  const role = useStore(s => s.role);
+  const ready = useStore(s => s.ready);
   const news = useStore((s) => s.news);
   const breaking = useStore((s) => s.breaking);
   const [sel, setSel] = useState<string | null>(null);
@@ -26,6 +32,9 @@ function Admin() {
   const [bt, setBt] = useState("");
   const pending = news.filter((n) => n.status === "pending");
   const cur = news.find((n) => n.id === sel) ?? pending[0];
+  if (!ready) return <main className="p-6">कृपया थांबा…</main>;
+  if (!userId) return <main><BackButton /><AccountForm /></main>;
+  if (role !== 'admin' && role !== 'editor') return <main className="space-y-4 p-6"><BackButton /><h1 className="font-bold">संपादकीय प्रवेश आवश्यक</h1><p>या खात्याला संपादकीय परवानगी नाही.</p></main>;
   return (
     <main className="mx-auto max-w-[1400px] space-y-4 px-3 py-4 sm:space-y-5 sm:px-4 sm:py-6">
       <div className="flex flex-wrap items-center gap-2">
@@ -33,8 +42,8 @@ function Admin() {
         <h1 className="text-lg font-bold sm:text-2xl">FOCUS 24 NEWS मराठी · संपूर्ण नियंत्रण पॅनेल</h1>
       </div>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat icon={<Users className="size-5" />} value="288" label="विधानसभा प्रतिनिधी" sub="Active: 242" />
-        <Stat icon={<MapPin className="size-5" />} value="36" label="जिल्हा प्रतिनिधी" sub="Active: 36" />
+        <Stat icon={<Users className="size-5" />} value={news.length} label="एकूण बातम्या" />
+        <Stat icon={<MapPin className="size-5" />} value={new Set(news.map(n=>n.districtId)).size} label="बातम्यांचे जिल्हे" />
         <Stat red icon={<Clock className="size-5" />} value={pending.length} label="प्रलंबित बातम्या" />
         <Stat icon={<CheckCircle2 className="size-5" />} value={news.filter((n) => n.status === "approved").length} label="आज मंजूर" />
       </div>
@@ -56,6 +65,7 @@ function Admin() {
         {cur && (
           <Glass red className="space-y-3 p-4">
             <h2 className="font-bold">Review Studio</h2>
+            <div className="grid grid-cols-2 gap-2">{Object.entries(cur.clipUrls ?? {}).map(([k,url]) => <div key={k}><span className="text-xs">{k}</span><video src={url} controls playsInline className="aspect-video w-full" /></div>)}</div>
             <input className={inputCls} value={cur.headline} onChange={(e) => actions.updateNews(cur.id, { headline: e.target.value })} />
             <textarea className={`${inputCls} h-28`} value={cur.script} onChange={(e) => actions.updateNews(cur.id, { script: e.target.value })} />
             <select className={`${inputCls} bg-card`} value={cur.importance} onChange={(e) => actions.updateNews(cur.id, { importance: e.target.value as never })}>

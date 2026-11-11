@@ -3,10 +3,13 @@ import { BackButton } from "@/components/BackButton";
 import { Glass, GlowButton, LiveDot, Logo, Ticker } from "@/components/ui/glass";
 import { actions, useStore, type Source } from "@/lib/store";
 import { SAMPLE_VIDEOS } from "@/data/mock";
+import { AccountForm } from '@/components/AccountForm';
 
 export const Route = createFileRoute("/broadcast")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Broadcast Studio — FOCUS 24 NEWS" },
       { name: "description", content: "FOCUS 24 NEWS लाईव्ह प्रसारण नियंत्रण कक्ष." },
       { property: "og:title", content: "Broadcast Studio — FOCUS 24 NEWS" },
@@ -22,6 +25,9 @@ function Broadcast() {
   const s = useStore((x) => x);
   const now = s.news.find((n) => n.id === s.nowPlaying);
   const idx = sources.findIndex(([k]) => k === s.source);
+  if (!s.ready) return <main className="p-6">कृपया थांबा…</main>;
+  if (!s.userId) return <main><BackButton /><AccountForm /></main>;
+  if (s.role !== 'admin' && s.role !== 'editor') return <main className="space-y-4 p-6"><BackButton /><p>संपादकीय प्रवेश आवश्यक</p></main>;
   return (
     <main className="mx-auto grid max-w-[1400px] gap-4 px-3 py-4 sm:px-4 sm:py-6 lg:grid-cols-[2fr_1fr]">
       <Glass red className="space-y-3 p-4">
@@ -29,6 +35,7 @@ function Broadcast() {
           <div className="flex min-w-0 items-center gap-2"><BackButton /><h1 className="truncate font-bold">Master Control</h1></div>
           {s.onAir && <LiveDot label="ON AIR" />}
         </div>
+        <p className="text-xs text-warning">प्रसारण प्रिव्ह्यू · YouTube / Facebook लाईव्ह जोडलेले नाही.</p>
         <div className="relative overflow-hidden rounded-xl">
           {s.source === "standby" ? <div className="grid aspect-video place-items-center bg-card"><Logo size="lg" /></div>
             : <video key={s.source} src={SAMPLE_VIDEOS[idx % 4]} autoPlay muted loop playsInline className="aspect-video w-full object-cover" />}
