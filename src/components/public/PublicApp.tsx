@@ -7,6 +7,7 @@ import { DISTRICTS, districtName } from "@/data/maharashtra";
 import { IMAGES, SAMPLE_VIDEOS } from "@/data/mock";
 import type { NewsArticle } from "@/types";
 import { NewsAudio } from './NewsAudio';
+import { isPublished } from '@/lib/public-news';
 
 const tabs = ["Home", "Live TV", "महाराष्ट्र", "जिल्हे", "विधानसभा"] as const;
 const tiles = [
@@ -25,6 +26,11 @@ export function PublicApp() {
   const [open, setOpen] = useState<NewsArticle | null>(null);
   const [district, setDistrict] = useState("all");
   const news = useStore((s) => s.news);
+  const content = useStore(s=>s.content.filter(c=>c.active));
+  const categories = content.filter(c=>c.kind==='category');
+  const districts = content.filter(c=>c.kind==='district');
+  const liveUrl = String(content.find(c=>c.kind==='live')?.data['url'] ?? '');
+  const bulletinIds = content.filter(c=>c.kind==='bulletin').flatMap(c=>String(c.data['newsIds'] ?? '').split(',').map(id=>id.trim()).filter(Boolean));
   const breaking = useStore((s) => s.breaking);
   const ads = useStore((s) => s.ads.filter((a) => a.active));
   const bulletin = useStore((s) => s.bulletin);
@@ -37,8 +43,8 @@ export function PublicApp() {
   const go = (t: string) => { setHistory((h) => [...h, tab]); setTab(t); };
   const back = () => { const prev = history.at(-1) ?? "Home"; setHistory((h) => h.slice(0, -1)); setTab(prev); };
 
-  const live = useMemo(() => news.filter((n) => n.status === "approved" || n.status === "broadcasted")
-    .filter((n) => district === "all" || n.districtId === district), [news, district]);
+  const live = useMemo(() => news.filter((n) => isPublished(n.status))
+    .filter((n) => district === "all" || n.districtId === district).filter(n=>!tab.startsWith('category:')||n.category===tab.slice(9)), [news, district, tab]);
 
   if (splash) return (
     <button onClick={() => setSplash(false)} className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden text-center">
@@ -53,7 +59,7 @@ export function PublicApp() {
     </button>
   );
 
-  if (open) return <Detail n={open} onBack={() => setOpen(null)} adName={ads[0]?.advertiser} />;
+  if (open && news.some(n=>n.id===open.id && isPublished(n.status))) return <Detail n={news.find(n=>n.id===open.id) ?? open} onBack={() => setOpen(null)} adName={ads[0]?.advertiser} />;
 
   return (
     <div className="relative flex min-h-full flex-col">
@@ -73,12 +79,15 @@ export function PublicApp() {
         ))}
       </div>
 
+      {categories.length>0 && <div className="flex gap-2 overflow-x-auto px-3 pb-2">{categories.map(c=><button key={c.id} className="glass shrink-0 rounded-md px-3 py-1 text-xs" onClick={()=>go(`category:${c.name}`)}>{c.name}</button>)}</div>}
+      {tab.startsWith('category:') && <div className="px-3"><List title={tab.slice(9)} items={live} onOpen={setOpen} /></div>}
+
       {(tab === "Home" || tab === "Live TV" || tab === "महाराष्ट्र") && (
         <div className="space-y-3 px-3">
           <div className="relative overflow-hidden rounded-2xl border border-primary/40">
-            <img src={IMAGES.studio} alt="FOCUS 24 studio preview" className="aspect-video w-full object-cover" />
-            <div className="absolute right-2 top-2"><Pill tone="gray">प्रसारण जोडलेले नाही</Pill></div>
-            <div className="absolute bottom-0 inset-x-0 bg-linear-to-t from-background/90 p-2 text-xs font-semibold">
+            {liveUrl && /^https:\/\//.test(liveUrl) ? <video controls playsInline src={liveUrl} poster={IMAGES.studio} className="aspect-video w-full" /> : <img src={IMAGES.studio} alt="FOCUS 24 studio preview" className="aspect-video w-full object-cover" />}
+            {!liveUrl && <div className="absolute right-2 top-2"><Pill tone="gray">प्रसारण जोडलेले नाही</Pill></div>}
+            <div className="pointer-events-none absolute top-2 left-2 bg-background/80 p-2 text-xs font-semibold">
               {nowPlaying ? nowPlaying.headline : "FOCUS 24 NEWS मराठी"}
             </div>
           </div>
@@ -102,7 +111,7 @@ export function PublicApp() {
         <div className="space-y-3 px-3">
           <select value={district} onChange={(e) => setDistrict(e.target.value)} className="w-full rounded-xl glass bg-card px-3 py-2 text-sm">
             <option value="all">सर्व जिल्हे (36)</option>
-            {DISTRICTS.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+            {(districts.length ? districts.map(d=>({id:String(d.data['code']||d.name),name:d.name})) : DISTRICTS).map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
           </select>
           <List title={tab === "जिल्हे" ? "जिल्हा बातम्या" : "विधानसभा बातम्या"} items={live} onOpen={setOpen} showSeat={tab === "विधानसभा"} />
         </div>
@@ -112,7 +121,7 @@ export function PublicApp() {
         <div className="space-y-2 px-3">
           <Glass red className="p-3"><div className="flex items-center gap-2 font-bold"><Zap className="size-5 text-neon" />सुपरफास्ट 100</div>
             <p className="text-xs text-muted-foreground">{published ? "आजचे बुलेटिन प्रकाशित ✓" : "पुढील बुलेटिन लवकरच..."}</p></Glass>
-          {bulletin.map((id, i) => { const n = news.find((x) => x.id === id); return n && (
+          {(bulletinIds.length?bulletinIds:bulletin).map((id, i) => { const n = news.find((x) => x.id === id && isPublished(x.status)); return n && (
             <button key={id} onClick={() => setOpen(n)} className="glass flex w-full items-center gap-2 rounded-xl p-2 text-left text-xs">
               <span className="w-6 text-center font-bold text-neon">{i + 1}</span>{n.headline}
             </button>); })}

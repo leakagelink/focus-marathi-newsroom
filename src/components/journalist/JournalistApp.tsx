@@ -10,6 +10,7 @@ import { AccountForm } from '@/components/AccountForm';
 import { supabase } from '@/integrations/supabase/client';
 import { BackButton } from '@/components/BackButton';
 import { Button } from '@/components/ui/button';
+import { ProfileEditor } from './ProfileEditor';
 
 const CLIPS: { k: ClipType; t: string; d: string; sec: string }[] = [
   { k: "location", t: "Location Visual", d: "10 सेकंद", sec: "0:10" },
@@ -18,7 +19,7 @@ const CLIPS: { k: ClipType; t: string; d: string; sec: string }[] = [
   { k: "byte2", t: "Second Byte", d: "60 सेकंद", sec: "1:00" },
 ];
 const ME = "j1";
-type JTab = "upload" | "list" | "earn";
+type JTab = "upload" | "list" | "earn" | "profile";
 
 export function JournalistApp() {
   const userId = useStore(s => s.userId);
@@ -62,9 +63,10 @@ export function JournalistApp() {
       {tab === "upload" && <UploadForm onDone={() => setTab("list")} />}
       {tab === "list" && <MyUploads />}
       {tab === "earn" && <Earnings />}
+      {tab === "profile" && <ProfileEditor />}
       </div>
       <nav className="sticky bottom-0 z-30 flex justify-around border-t border-glass-border bg-card/95 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 text-[10px] backdrop-blur">
-        {([["upload", CloudUpload, "अपलोड"], ["list", ListChecks, "माझे अपलोड"], ["earn", Wallet, "कमाई"]] as const).map(([k, I, l]) => (
+        {([["upload", CloudUpload, "अपलोड"], ["list", ListChecks, "माझे अपलोड"], ["earn", Wallet, "कमाई"], ["profile", UserRound, "प्रोफाइल"]] as const).map(([k, I, l]) => (
           <button key={k} onClick={() => go(k)} className={`flex flex-col items-center gap-0.5 ${tab === k ? "text-neon" : "text-muted-foreground"}`}><I className="size-5" />{l}</button>
         ))}
       </nav>
@@ -75,6 +77,9 @@ export function JournalistApp() {
 function UploadForm({ onDone }: { onDone: () => void }) {
   const userId = useStore(s => s.userId);
   const paths = useRef<Partial<Record<ClipType,string>>>({});
+  const content = useStore(s=>s.content.filter(c=>c.active));
+  const availableCategories = content.filter(c=>c.kind==='category').map(c=>c.name);
+  const availableDistricts = content.filter(c=>c.kind==='district').map(c=>({id:String(c.data['code']||c.name),name:c.name}));
   const [prog, setProg] = useState<Record<ClipType, number>>({ location: 0, anchor: 0, byte1: 0, byte2: 0 });
   const [preview, setPreview] = useState<{ k: ClipType; url: string } | null>(null);
   const [urls, setUrls] = useState<Partial<Record<ClipType, string>>>({});
@@ -152,13 +157,13 @@ function UploadForm({ onDone }: { onDone: () => void }) {
       <input className={inputCls} placeholder="बातमीचे शीर्षक" value={headline} onChange={(e) => setHeadline(e.target.value)} maxLength={120} />
       <div className="grid grid-cols-2 gap-2">
         <select className={`${inputCls} bg-card`} value={district} onChange={(e) => { setDistrict(e.target.value); setSeat(CONSTITUENCIES.find((c) => c.districtId === e.target.value)?.name ?? ''); }}>
-          {DISTRICTS.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+          {(availableDistricts.length?availableDistricts:DISTRICTS).map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
         </select>
         <select className={`${inputCls} bg-card`} value={seat} onChange={(e) => setSeat(e.target.value)}>
           {seats.map((c) => <option key={c.id}>{c.name}</option>)}
         </select>
       </div>
-      <select className={`${inputCls} bg-card`} value={cat} onChange={(e) => setCat(e.target.value as Category)}>{CATEGORIES.map((c) => <option key={c}>{c}</option>)}</select>
+      <select className={`${inputCls} bg-card`} value={cat} onChange={(e) => setCat(e.target.value as Category)}>{(availableCategories.length?availableCategories:CATEGORIES).map((c) => <option key={c}>{c}</option>)}</select>
       <div>
         <div className="mb-1 text-xs font-semibold">बातमीची स्क्रिप्ट <span className="text-faint">(80 - 100 शब्द)</span></div>
         <textarea className={`${inputCls} h-24 resize-none`} value={script} onChange={(e) => setScript(e.target.value)} placeholder="सातारा जिल्ह्यातील कराड तालुक्यातील..." />

@@ -8,6 +8,7 @@ import { IMAGES } from '@/data/mock';
 
 export type Source = "studio" | "field" | "superfast" | "ads" | "standby";
 export interface State {
+  content: {id:string;kind:string;name:string;active:boolean;data:Record<string,unknown>}[];
   userId: string | null;
   ready: boolean;
   role: Role;
@@ -28,6 +29,7 @@ export interface State {
 }
 
 let state: State = {
+  content: [],
   userId: null, ready: false,
   role: "public",
   news: [], breaking: [], ads: [], journalists: [], payments: [],
@@ -58,12 +60,14 @@ let refreshVersion = 0;
 export async function refreshCloud() {
   const version = ++refreshVersion;
   const { data: { user } } = await supabase.auth.getUser();
-  const [news, breaking, settings, roles, profiles] = await Promise.all([
+  const [news, breaking, settings, roles, profiles, content, payments] = await Promise.all([
     supabase.from('news').select('*').order('created_at', { ascending: false }).limit(500),
     supabase.from('breaking_news').select('*').order('created_at', { ascending: false }),
     user ? supabase.from('broadcast_settings').select('*').eq('id', 'main').maybeSingle() : Promise.resolve({data:null,error:null}),
     user ? supabase.from('user_roles').select('role').eq('user_id', user.id) : Promise.resolve({ data: [] }),
     user ? supabase.from('profiles').select('*') : Promise.resolve({ data: [] }),
+    supabase.from('app_content').select('*'),
+    user ? supabase.from('payment_records').select('*') : Promise.resolve({data:[]}),
   ]);
   if (version !== refreshVersion) return;
   if (news.error || breaking.error || settings.error) { toast.error('डेटा लोड झाला नाही. पुन्हा प्रयत्न करा.'); return; }
@@ -82,7 +86,10 @@ export async function refreshCloud() {
   const role: Role = assigned.some((r) => r.role === 'admin') ? 'admin' : assigned.some((r) => r.role === 'editor') ? 'editor' : user ? 'journalist' : 'public';
   set(() => ({ userId:user?.id ?? null, ready:true, role, news:mapped,
     breaking:(breaking.data ?? []).map((b) => ({id:b.id,text:b.text,region:b.region,minutes:b.minutes,createdAt:b.created_at})),
-    journalists:(profiles.data ?? []).map((p) => ({id:p.id,name:p.name,role:'पत्रकार',districtId:p.district_id,constituencyId:p.constituency,avatar:p.avatar,code:'',phone:'',email:'',rating:0,submitted:mapped.filter(n=>n.reporterId===p.id).length,approved:mapped.filter(n=>n.reporterId===p.id && ['approved','broadcasted'].includes(n.status)).length,status:'verified' as const})),
+    journalists:(profiles.data ?? []).map((p) => ({id:p.id,name:p.name,role:'पत्रकार',districtId:p.district_id,constituencyId:p.constituency,avatar:p.avatar,code:'',phone:p.phone,email:p.contact_email,rating:0,submitted:mapped.filter(n=>n.reporterId===p.id).length,approved:mapped.filter(n=>n.reporterId===p.id && ['approved','broadcasted'].includes(n.status)).length,status:'verified' as const})),
+    content:(content.data ?? []).map(c=>({...c,data:c.data as Record<string,unknown>})),
+    payments:(payments.data ?? []).map(p=>({id:p.id,journalistId:p.journalist_id,month:p.month,base:Number(p.amount),stories:0,exclusives:0,status:p.status==='paid'?'paid':'processing'})),
+    ads:(content.data ?? []).filter(c=>c.kind==='advertisement'&&c.active).map(c=>({id:c.id,advertiser:c.name,contact:'',type:'display',target:'',start:'',end:'',impressions:0,clicks:0,budget:0,paid:false,active:c.active,url:String((c.data as Record<string,unknown>)['url'] ?? '')})),
     ...(settings.data?.data as Partial<Pick<State,'onAir'|'source'|'overlays'|'platforms'|'nowPlaying'|'bulletin'|'bulletinPublished'>> ?? {}),
   }));
 }

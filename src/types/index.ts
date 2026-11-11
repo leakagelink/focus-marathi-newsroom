@@ -1,6 +1,6 @@
 export type Role = "public" | "journalist" | "editor" | "admin";
 export type Division = "कोकण" | "पुणे" | "नाशिक" | "छत्रपती संभाजीनगर" | "अमरावती" | "नागपूर";
-export type Category = "राजकारण" | "गुन्हे" | "शेती" | "हवामान" | "क्रीडा" | "मनोरंजन";
+export type Category = string;
 export type NewsStatus = "pending" | "approved" | "rejected" | "revision" | "broadcasted";
 export type Importance = "normal" | "trending" | "breaking";
 export type ClipType = "location" | "anchor" | "byte1" | "byte2";

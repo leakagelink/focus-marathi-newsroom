@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_access: {
+        Row: {
+          suspended: boolean
+          user_id: string
+        }
+        Insert: {
+          suspended?: boolean
+          user_id: string
+        }
+        Update: {
+          suspended?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_access_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      app_content: {
+        Row: {
+          active: boolean
+          created_at: string
+          data: Json
+          id: string
+          kind: string
+          name: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          data?: Json
+          id?: string
+          kind: string
+          name: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          data?: Json
+          id?: string
+          kind?: string
+          name?: string
+        }
+        Relationships: []
+      }
       breaking_news: {
         Row: {
           created_at: string
@@ -110,30 +160,80 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_records: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          journalist_id: string
+          month: string
+          note: string
+          status: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          journalist_id: string
+          month: string
+          note?: string
+          status?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          journalist_id?: string
+          month?: string
+          note?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_records_journalist_id_fkey"
+            columns: ["journalist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
+          address: string
           avatar: string
+          bio: string
           constituency: string
+          contact_email: string
           created_at: string
           district_id: string
           id: string
           name: string
+          phone: string
         }
         Insert: {
+          address?: string
           avatar?: string
+          bio?: string
           constituency?: string
+          contact_email?: string
           created_at?: string
           district_id?: string
           id: string
           name?: string
+          phone?: string
         }
         Update: {
+          address?: string
           avatar?: string
+          bio?: string
           constituency?: string
+          contact_email?: string
           created_at?: string
           district_id?: string
           id?: string
           name?: string
+          phone?: string
         }
         Relationships: []
       }
@@ -160,6 +260,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      account_enabled: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

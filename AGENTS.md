@@ -35,3 +35,5 @@ use the editor.
 - New accounts receive only journalist access; owner administrator access must be assigned to a verified, explicitly identified account, never the first signup.
 - Text-only news uses empty clip_paths; video submissions still require four owned clips, preserving moderation and validation.
 - News listening uses browser SpeechSynthesis only after hydration, preferring Marathi then Hindi voices and cancelling on exit; unsupported devices show an unavailable state instead of calling a paid service.
+- Admin management uses separate news, profile, content, payment and account-access editors with explicit save and confirmed delete; database policies enforce editorial versus administrator permissions.
+- Public story lists, open details and bulletins share approval-first visibility; app_content stores managed categories, districts, advertisements, live sources and bulletin IDs.
