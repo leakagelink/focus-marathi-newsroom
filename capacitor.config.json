@@ -1,0 +1,10 @@
+{
+  "appId": "com.focus24.news",
+  "appName": "FOCUS 24 NEWS",
+  "webDir": "www",
+  "server": {
+    "url": "https://news.homemuse.in",
+    "cleartext": false,
+    "allowNavigation": ["news.homemuse.in"]
+  }
+}

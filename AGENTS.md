@@ -41,3 +41,4 @@ use the editor.
 - Keep fictional sample submissions in a shared validated fixture; derive managed bulletin publication state from referenced published stories rather than private broadcast settings.
 - AccountForm offers email/password and phone/SMS OTP; phone login never creates users, signup carries only profile name, and OTP verification uses the number returned by the send step.
 - Use one shared Logo component for screen branding and derive install icons and favicon from the same supplied image so replacements stay consistent.
+- Keep the online Android wrapper configuration in capacitor.config.json with a minimal www entry and an exact-host HTTPS navigation allowlist; this prevents canonical-domain redirects escaping the WebView without allowing arbitrary sites native-plugin access. Local Android projects must sync and rebuild to receive changes.
