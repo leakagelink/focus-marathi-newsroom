@@ -9,6 +9,7 @@ import type { Category, ClipType, NewsStatus } from "@/types";
 import { AccountForm } from '@/components/AccountForm';
 import { supabase } from '@/integrations/supabase/client';
 import { BackButton } from '@/components/BackButton';
+import { Button } from '@/components/ui/button';
 
 const CLIPS: { k: ClipType; t: string; d: string; sec: string }[] = [
   { k: "location", t: "Location Visual", d: "10 सेकंद", sec: "0:10" },
@@ -79,7 +80,7 @@ function UploadForm({ onDone }: { onDone: () => void }) {
   const [urls, setUrls] = useState<Partial<Record<ClipType, string>>>({});
   const [script, setScript] = useState("");
   const [headline, setHeadline] = useState("");
-  const [ai, setAi] = useState(true);
+  const [textOnly, setTextOnly] = useState(false);
   const [district, setDistrict] = useState("satara");
   const seats = useMemo(() => CONSTITUENCIES.filter((c) => c.districtId === district), [district]);
   const [seat, setSeat] = useState("कराड दक्षिण");
@@ -105,14 +106,14 @@ function UploadForm({ onDone }: { onDone: () => void }) {
 
   const submit = async () => {
     const missing = CLIPS.filter((c) => prog[c.k] < 100);
-    if (missing.length) { toast.error(`अनिवार्य क्लिप बाकी: ${missing.map((m) => m.t).join(", ")}`); return; }
+    if (!textOnly && missing.length) { toast.error(`अनिवार्य क्लिप बाकी: ${missing.map((m) => m.t).join(", ")}`); return; }
     if (headline.trim().length < 10) { toast.error("कृपया बातमीचे शीर्षक टाका"); return; }
     if (words < 80 || words > 100) { toast.error("स्क्रिप्ट 80 ते 100 शब्दांची असावी"); return; }
     setBusy(true);
     try {
-      const id = await actions.submitNews({ id:'', headline: headline.trim(), script: script.trim(), category: cat, districtId: district, constituency: seat, reporterId: userId ?? '', clipPaths:paths.current,
+      const id = await actions.submitNews({ id:'', headline: headline.trim(), script: script.trim(), category: cat, districtId: district, constituency: seat, reporterId: userId ?? '', clipPaths:textOnly ? {} : paths.current,
         createdAt: new Date().toISOString(), status: "pending", importance: "normal", image: IMAGES.farmer,
-        clips: { location: true, anchor: true, byte1: true, byte2: true }, urgent: false, aiVoice: ai, views: 0 });
+        clips: { location: !textOnly, anchor: !textOnly, byte1: !textOnly, byte2: !textOnly }, urgent: false, aiVoice: false, views: 0 });
       setDone(id);
     } catch(e) { toast.error(e instanceof Error ? e.message : 'अपलोड अयशस्वी'); }
     finally { setBusy(false); }
@@ -121,8 +122,12 @@ function UploadForm({ onDone }: { onDone: () => void }) {
   return (
     <div className="space-y-3">
       <h3 className="font-bold">नवीन बातमी अपलोड करा</h3>
+      <div className="grid grid-cols-2 gap-2" role="group" aria-label="बातमी प्रकार">
+        <Button variant={textOnly ? 'outline' : 'default'} aria-pressed={!textOnly} disabled={busy} onClick={() => setTextOnly(false)}><FileVideo />व्हिडिओ बातमी</Button>
+        <Button variant={textOnly ? 'default' : 'outline'} aria-pressed={textOnly} disabled={busy || Object.values(prog).some(p => p > 0 && p < 100)} onClick={() => setTextOnly(true)}><ListChecks />मजकूर बातमी</Button>
+      </div>
       <input ref={fileRef} type="file" accept="video/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f && pending.current) void startUpload(pending.current, f); e.target.value = ""; }} />
-      {CLIPS.map((c, i) => {
+      {!textOnly && CLIPS.map((c, i) => {
         const p = prog[c.k];
         return (
           <Glass key={c.k} className="flex items-center gap-2.5 p-2">
@@ -162,10 +167,6 @@ function UploadForm({ onDone }: { onDone: () => void }) {
           <span className={words > 100 ? "text-neon" : ""}>{words} / 100 शब्द · {script.length} अक्षरे</span>
         </div>
       </div>
-      <Glass className="flex items-center justify-between p-3 text-xs">
-        <span>🎙️ AI आवाज विनंती (निर्मिती अद्याप जोडलेली नाही)</span>
-        <button onClick={() => setAi(!ai)} className={`h-6 w-11 rounded-full p-0.5 transition ${ai ? "bg-primary" : "bg-glass"}`}><span className={`block size-5 rounded-full bg-foreground transition ${ai ? "translate-x-5" : ""}`} /></button>
-      </Glass>
       <GlowButton className="w-full py-3 text-base" onClick={submit} disabled={busy}>
         {busy ? <Loader2 className="size-5 animate-spin" /> : <CloudUpload className="size-5" />}{busy ? "अपलोड होत आहे..." : "बातमी अपलोड करा"}
       </GlowButton>

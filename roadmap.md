@@ -1,4 +1,5 @@
 # Live backend
+- [ ] Add text-only submission and device-powered news listening without AI credits or API calls.
 - [x] Persist news, moderation, breaking news and broadcast settings with protected access.
 - [x] Replace demo login with real accounts, profiles and private video uploads.
 - [x] Check public/login screens, validation tests, compilation and basic security.

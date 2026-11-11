@@ -33,3 +33,5 @@ use the editor.
 - Cloud news, breaking news and broadcast settings replace demo rows; private clip paths are signed for authorized readers, so pending reports stay private.
 - A single root auth subscription refreshes the browser store after identity changes; generation guards discard outdated refreshes, preventing stale private state after sign-out.
 - New accounts receive only journalist access; owner administrator access must be assigned to a verified, explicitly identified account, never the first signup.
+- Text-only news uses empty clip_paths; video submissions still require four owned clips, preserving moderation and validation.
+- News listening uses browser SpeechSynthesis only after hydration, preferring Marathi then Hindi voices and cancelling on exit; unsupported devices show an unavailable state instead of calling a paid service.

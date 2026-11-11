@@ -6,6 +6,7 @@ import { useStore } from "@/lib/store";
 import { DISTRICTS, districtName } from "@/data/maharashtra";
 import { IMAGES, SAMPLE_VIDEOS } from "@/data/mock";
 import type { NewsArticle } from "@/types";
+import { NewsAudio } from './NewsAudio';
 
 const tabs = ["Home", "Live TV", "महाराष्ट्र", "जिल्हे", "विधानसभा"] as const;
 const tiles = [
@@ -151,6 +152,7 @@ function List({ title, items, onOpen, showSeat }: { title: string; items: NewsAr
 
 function Detail({ n, onBack, adName }: { n: NewsArticle; onBack: () => void; adName?: string | undefined }) {
   const [clip, setClip] = useState(0);
+  const hasVideo = Object.values(n.clips).some(Boolean);
   const labels = ["Location (10s)", "Anchoring (20s)", "First Byte (60s)", "Second Byte (60s)"];
   return (
     <div className="space-y-3 px-3 pb-6 animate-in fade-in slide-in-from-right-4">
@@ -159,21 +161,22 @@ function Detail({ n, onBack, adName }: { n: NewsArticle; onBack: () => void; adN
         <h2 className="flex-1 text-center font-bold">बातमीचा तपशील</h2>
         <span className="w-8" />
       </div>
-      <video key={clip} src={n.clipUrls?.[(['location','anchor','byte1','byte2'] as const)[clip] ?? 'location']} poster={n.image} controls autoPlay muted playsInline className="aspect-video w-full rounded-xl object-cover" />
+      {hasVideo && <video key={clip} src={n.clipUrls?.[(['location','anchor','byte1','byte2'] as const)[clip] ?? 'location']} poster={n.image} controls autoPlay muted playsInline className="aspect-video w-full rounded-xl object-cover" />}
       <h1 className="text-lg font-bold leading-snug">{n.headline}</h1>
+      {!hasVideo && <NewsAudio key={n.id} headline={n.headline} script={n.script} />}
       <div className="flex flex-wrap gap-1.5 text-[11px]">
         <Pill><MapPin className="size-3" />{districtName(n.districtId)}</Pill><Pill><Landmark className="size-3" />{n.constituency}</Pill>
         <Pill><CalendarDays className="size-3" />{new Date(n.createdAt).toLocaleString("mr-IN", { hour: "2-digit", minute: "2-digit" })}</Pill>
       </div>
       <p className="text-sm leading-relaxed text-muted-foreground">{n.script}</p>
-      <p className="text-xs font-semibold"><span className="text-neon">●</span> संबंधित व्हिडिओ (2:30 मिनिटे)</p>
+      {hasVideo && <><p className="text-xs font-semibold"><span className="text-neon">●</span> संबंधित व्हिडिओ (2:30 मिनिटे)</p>
       <div className="grid grid-cols-4 gap-1.5">
         {labels.map((l, i) => (
           <button key={l} onClick={() => setClip(i)} className={`text-center text-[9px] ${clip === i ? "text-neon" : "text-muted-foreground"}`}>
             <div className={`relative mb-1 overflow-hidden rounded-lg border ${clip === i ? "border-primary" : "border-glass-border"}`}><img src={n.image} alt="" className="aspect-square object-cover" /><Play className="absolute inset-0 m-auto size-5" /></div>{l}
           </button>
         ))}
-      </div>
+      </div></>}
       {adName && <Glass className="p-2 text-center text-xs"><Pill tone="amber">AD</Pill> {adName}</Glass>}
       <div className="flex gap-2">
         <button onClick={() => { navigator.clipboard?.writeText(`${n.headline} — FOCUS 24 NEWS`); toast("लिंक कॉपी केली"); }} className="glass flex flex-1 items-center justify-center gap-1 rounded-xl py-2 text-xs"><Share2 className="size-4" />Share</button>

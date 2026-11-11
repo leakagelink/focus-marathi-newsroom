@@ -104,7 +104,7 @@ export const actions = {
   submitNews: async (n: NewsArticle) => {
     if (!state.userId) throw new Error('लॉगिन करा');
     const input = submissionSchema.parse({ ...n, clipPaths:n.clipPaths });
-    if (Object.values(input.clipPaths).some(p => !p.startsWith(`${state.userId}/`))) throw new Error('अवैध क्लिप');
+    if (Object.values(input.clipPaths).some(p => !p?.startsWith(`${state.userId}/`))) throw new Error('अवैध क्लिप');
     const {data,error} = await supabase.from('news').insert({reporter_id:state.userId,headline:input.headline,script:input.script,category:input.category,district_id:input.districtId,constituency:input.constituency,clip_paths:input.clipPaths,ai_voice:input.aiVoice}).select('id').single();
     if(error) throw error;
     await refreshCloud(); return data.id;
