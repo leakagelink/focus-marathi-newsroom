@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from "react";
+import logoAsset from '@/assets/focus-24-logo.jpeg.asset.json';
 
 export function Glass({ className, red, ...p }: HTMLAttributes<HTMLDivElement> & { red?: boolean | undefined }) {
   return <div className={cn(red ? "glass-red" : "glass", "rounded-2xl", className)} {...p} />;
@@ -40,21 +41,7 @@ export function LiveDot({ label = "LIVE" }: { label?: string }) {
 }
 
 export function Logo({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
-  const s = { sm: "text-base", md: "text-xl", lg: "text-5xl" }[size];
-  return (
-    <div className={cn("inline-flex flex-col leading-none font-black italic tracking-tight select-none", s)}>
-      <span className="flex items-center gap-1">
-        <span className="relative inline-grid place-items-center">
-          <span className="text-foreground">FOCUS</span>
-        </span>
-        <span className="text-neon drop-shadow-[0_0_10px_var(--neon)]">24</span>
-      </span>
-      <span className="flex items-center gap-1">
-        <span className="text-foreground">NEWS</span>
-        <span className="rounded bg-primary px-1 not-italic text-[0.6em] font-bold text-primary-foreground">मराठी</span>
-      </span>
-    </div>
-  );
+  return <img src={logoAsset.url} alt="FOCUS 24 NEWS मराठी" width={256} height={256} className={cn('inline-block shrink-0 object-contain select-none', { sm: 'size-12', md: 'size-16', lg: 'size-36' }[size])} />;
 }
 
 export function Ticker({ items, label = "BREAKING NEWS" }: { items: string[]; label?: string }) {
