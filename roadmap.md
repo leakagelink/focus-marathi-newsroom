@@ -1,4 +1,5 @@
 # Live backend
+- [x] Replace shared app logos, splash branding, favicon and install icons with the latest supplied transparent logo; verify menu navigation on public, journalist, admin and broadcast screens at mobile and desktop sizes. Native Android launcher updates require rebuilding the separately maintained APK.
 - [x] Test real admin text submission and journalist four-clip upload, private admin review, approval, anonymous detail/video playback, withdrawal, and mobile public/profile layout. Test managed content save/readback/delete and public categories, advertisements, bulletin and breaking ticker. Fix invalid sample length and managed bulletin status; 31 automated tests pass.
 - [x] Verify faster authenticated profile opening independently of slow news requests; real signed-in mobile profile opens while news is delayed eight seconds, and regression tests pass.
 - [x] Remove Google/Lovable buttons and disable their providers; retain enabled email signup/login and add phone OTP signup/login forms and validation tests.

@@ -40,3 +40,4 @@ use the editor.
 - Public story lists, open details and bulletins share approval-first visibility; app_content stores managed categories, districts, advertisements, live sources and bulletin IDs.
 - Keep fictional sample submissions in a shared validated fixture; derive managed bulletin publication state from referenced published stories rather than private broadcast settings.
 - AccountForm offers email/password and phone/SMS OTP; phone login never creates users, signup carries only profile name, and OTP verification uses the number returned by the send step.
+- Use one shared Logo component for screen branding and derive install icons and favicon from the same supplied image so replacements stay consistent.

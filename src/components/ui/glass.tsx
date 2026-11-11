@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from "react";
-import logoImage from '@/assets/focus-24-logo-transparent.png';
+import logoAsset from '@/assets/focus-24-current-logo.png.asset.json';
 
 export function Glass({ className, red, ...p }: HTMLAttributes<HTMLDivElement> & { red?: boolean | undefined }) {
   return <div className={cn(red ? "glass-red" : "glass", "rounded-2xl", className)} {...p} />;
@@ -41,7 +41,7 @@ export function LiveDot({ label = "LIVE" }: { label?: string }) {
 }
 
 export function Logo({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
-  return <img src={logoImage} alt="FOCUS 24 NEWS मराठी" width={256} height={256} className={cn('inline-block shrink-0 object-contain select-none', { sm: 'size-12', md: 'size-16', lg: 'size-36' }[size])} />;
+  return <img src={logoAsset.url} alt="FOCUS 24 NEWS मराठी" width={256} height={256} className={cn('inline-block shrink-0 object-contain select-none', { sm: 'size-12', md: 'size-16', lg: 'size-36' }[size])} />;
 }
 
 export function Ticker({ items, label = "BREAKING NEWS" }: { items: string[]; label?: string }) {
