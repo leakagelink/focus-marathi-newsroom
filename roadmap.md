@@ -1,14 +1,14 @@
 # Live backend
-- [ ] Run authenticated news submission, approval, withdrawal, content management and public/mobile checks; remove clearly labeled test records afterwards.
+- [x] Test real admin text submission and journalist four-clip upload, private admin review, approval, anonymous detail/video playback, withdrawal, and mobile public/profile layout. Test managed content save/readback/delete and public categories, advertisements, bulletin and breaking ticker. Fix invalid sample length and managed bulletin status; 31 automated tests pass.
 - [x] Verify faster authenticated profile opening independently of slow news requests; real signed-in mobile profile opens while news is delayed eight seconds, and regression tests pass.
 - [x] Remove Google/Lovable buttons and disable their providers; retain enabled email signup/login and add phone OTP signup/login forms and validation tests.
 - [ ] Enable and verify real SMS delivery; hosted auth settings report phone disabled. Requires Phone settings and an SMS delivery provider; no phone-provider configuration tool is available here.
 - [x] Add journalist profile editing, searchable news with approval/rejection/withdrawal and confirmed deletion; managed categories, districts, ads, live sources, bulletins, payment records and publishing-access suspension.
-- [ ] Verify authenticated admin CRUD, journalist submission → approval → public display, and publishing-access suspension end-to-end; no auth accounts exist yet. Permanent auth-account deletion and real payment transfer are not implemented.
+- [ ] Verify payment record readback, account suspension and complete profile edits end-to-end; tests for these controls remain unverified. Permanent auth-account deletion and real payment transfer require separate implementation.
 - [x] Add text-only submission and device-powered news listening without AI credits or API calls; validation and speech-control tests pass. Actual installed-phone audio remains unverified because the test browser has no Marathi/Hindi voice.
 - [x] Persist news, moderation, breaking news and broadcast settings with protected access.
 - [x] Replace demo login with real accounts, profiles and private video uploads.
 - [x] Check public/login screens, validation tests, compilation and basic security.
-- [ ] Verify authenticated upload → moderation → public playback end-to-end; blocked by no signed-up account.
-- [ ] Assign owner administrator access; blocked by no verified, identified owner account.
+- [x] Verify authenticated journalist four-clip upload → admin review/approval → anonymous mobile playback end-to-end.
+- [x] Assign administrator access to the verified, explicitly identified owner email.
 - [x] Publishing requested for the existing Focus 24 URL; deployment completion is not yet verified.
