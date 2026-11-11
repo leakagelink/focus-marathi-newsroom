@@ -1,12 +1,17 @@
 import { useState, type FormEvent } from 'react';
-import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { lovable } from '@/integrations/lovable';
 import { Glass, GlowButton, Logo, inputCls } from '@/components/ui/glass';
-import '@lovable.dev/cloud-auth-js/styles.css';
+import { Button } from '@/components/ui/button';
+import { Mail, Smartphone } from 'lucide-react';
+import { normalizePhone } from '@/lib/phone-auth';
 
 export function AccountForm() {
   const [signup, setSignup] = useState(false);
+  const [method, setMethod] = useState<'email'|'phone'>('email');
+  const [phone, setPhone] = useState('');
+  const [sentTo, setSentTo] = useState<string | null>(null);
+  const [otp, setOtp] = useState('');
+  const [resendAt, setResendAt] = useState(0);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -15,28 +20,63 @@ export function AccountForm() {
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault(); setBusy(true); setMessage('');
     try {
+      if (method === 'phone') {
+        if (sentTo) {
+          if (!/^\d{6}$/.test(otp)) throw new Error('6 अंकी OTP टाका.');
+          const { error } = await supabase.auth.verifyOtp({ phone: sentTo, token: otp, type: 'sms' });
+          if (error) throw new Error('OTP चुकीचा किंवा कालबाह्य आहे. पुन्हा प्रयत्न करा.');
+        } else {
+          const normalized = normalizePhone(phone);
+          if (!normalized) throw new Error('योग्य मोबाईल क्रमांक टाका. भारतासाठी 10 अंक; इतर देशांसाठी +देशकोड वापरा.');
+          const { error } = await supabase.auth.signInWithOtp({ phone: normalized, options: { shouldCreateUser: signup, ...(signup ? { data: { name: name.trim() } } : {}) } });
+          if (error) {
+            const lower = error.message.toLowerCase();
+            if (lower.includes('disabled') || lower.includes('provider') || lower.includes('configuration')) throw new Error('मोबाईल OTP सेवा अजून सुरू नाही. सध्या ईमेलने खाते तयार करा किंवा लॉगिन करा.');
+            throw new Error('OTP पाठवता आला नाही. क्रमांक व खाते तपासा किंवा थोड्या वेळाने पुन्हा प्रयत्न करा.');
+          }
+          setSentTo(normalized); setResendAt(Date.now()+60000); setMessage('मोबाईलवर पाठवलेला OTP टाका.');
+        }
+        return;
+      }
       const result = signup ? await supabase.auth.signUp({ email, password, options: { data: { name }, emailRedirectTo: window.location.origin } }) : await supabase.auth.signInWithPassword({ email, password });
       if (result.error) throw result.error;
       if (signup && !result.data.session) setMessage('ईमेलमधील लिंक उघडून खाते सत्यापित करा.');
     } catch (e) { setMessage(e instanceof Error ? e.message : 'लॉगिन अयशस्वी'); }
     finally { setBusy(false); }
   }
-  async function social(provider: 'google' | 'lovable') {
-    const result = await lovable.auth.signInWithOAuth(provider, { redirect_uri: window.location.origin });
-    if (result.error) toast.error(result.error.message);
+  function resetPhone() { setSentTo(null); setOtp(''); setMessage(''); }
+  async function resend() {
+    if (!sentTo || busy) return;
+    if(Date.now()<resendAt) {setMessage('OTP पुन्हा पाठवण्यासाठी एक मिनिट थांबा.');return;}
+    setBusy(true);
+    try {
+      const {error}=await supabase.auth.signInWithOtp({phone:sentTo,options:{shouldCreateUser:signup,...(signup?{data:{name:name.trim()}}:{})}});
+      if(error) throw new Error('OTP पुन्हा पाठवता आला नाही. थोड्या वेळाने प्रयत्न करा.');
+      setResendAt(Date.now()+60000);setMessage('नवीन OTP पाठवला.');
+    } catch(e) {setMessage(e instanceof Error?e.message:'OTP पाठवता आला नाही.');}
+    finally {setBusy(false);}
   }
   return <div className="mx-auto w-full max-w-sm space-y-4 p-4">
     <div className="text-center"><Logo /><h1 className="mt-3 font-bold">{signup ? 'नवीन खाते' : 'लॉगिन'}</h1></div>
-    <Glass className="space-y-3 p-4"><form onSubmit={submit} className="space-y-3">
-      {signup && <label className="block text-xs">नाव<input required className={inputCls} value={name} onChange={(e) => setName(e.target.value)} /></label>}
-      <label className="block text-xs">ईमेल<input type="email" required autoComplete="email" className={inputCls} value={email} onChange={(e) => setEmail(e.target.value)} /></label>
-      <label className="block text-xs">पासवर्ड<input type="password" minLength={8} required autoComplete={signup ? 'new-password' : 'current-password'} className={inputCls} value={password} onChange={(e) => setPassword(e.target.value)} /></label>
+    <Glass className="space-y-3 p-4">
+    <div className="grid grid-cols-2 gap-2" role="group" aria-label="लॉगिन पद्धत">
+      <Button disabled={busy} variant={method==='email'?'default':'outline'} aria-pressed={method==='email'} onClick={()=>{setMethod('email');resetPhone();}}><Mail />ईमेल</Button>
+      <Button disabled={busy} variant={method==='phone'?'default':'outline'} aria-pressed={method==='phone'} onClick={()=>{setMethod('phone');resetPhone();}}><Smartphone />मोबाईल</Button>
+    </div>
+    <form onSubmit={submit} className="space-y-3">
+      {signup && !sentTo && <label className="block text-xs">नाव<input required autoComplete="name" className={inputCls} value={name} onChange={(e) => setName(e.target.value)} /></label>}
+      {method==='email' ? <>
+        <label className="block text-xs">ईमेल<input type="email" required autoComplete="email" className={inputCls} value={email} onChange={(e) => setEmail(e.target.value)} /></label>
+        <label className="block text-xs">पासवर्ड<input type="password" minLength={8} required autoComplete={signup ? 'new-password' : 'current-password'} className={inputCls} value={password} onChange={(e) => setPassword(e.target.value)} /></label>
+      </> : sentTo ? <>
+        <p className="text-xs text-muted-foreground">OTP पाठवला: {sentTo}</p>
+        <label className="block text-xs">OTP<input required inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} className={inputCls} value={otp} onChange={e=>setOtp(e.target.value.replace(/\D/g,''))} /></label>
+        <div className="flex flex-wrap gap-2"><Button variant="ghost" size="sm" type="button" disabled={busy} onClick={resetPhone}>क्रमांक बदला</Button><Button variant="ghost" size="sm" type="button" disabled={busy} onClick={()=>void resend()}>OTP पुन्हा पाठवा</Button></div>
+      </> : <label className="block text-xs">मोबाईल क्रमांक<input type="tel" required autoComplete="tel" placeholder="9876543210 किंवा +91…" className={inputCls} value={phone} onChange={e=>setPhone(e.target.value)} /></label>}
       {message && <p role="status" className="text-sm text-warning">{message}</p>}
-      <GlowButton type="submit" className="w-full" disabled={busy}>{busy ? 'कृपया थांबा…' : signup ? 'खाते तयार करा' : 'लॉगिन करा'}</GlowButton>
+      <GlowButton type="submit" className="w-full" disabled={busy}>{busy ? 'कृपया थांबा…' : method==='phone' ? sentTo ? 'OTP सत्यापित करा' : 'OTP पाठवा' : signup ? 'खाते तयार करा' : 'लॉगिन करा'}</GlowButton>
     </form>
-    <GlowButton variant="ghost" className="w-full" onClick={() => setSignup(!signup)}>{signup ? 'आधीच खाते आहे? लॉगिन' : 'नवीन खाते तयार करा'}</GlowButton>
-    <GlowButton variant="ghost" className="w-full" onClick={() => social('google')}><svg aria-hidden="true" className="size-[18px]" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.29v3.09C3.26 21.3 7.31 24 12 24z"/><path fill="#FBBC05" d="M5.27 14.29c-.25-.72-.38-1.49-.38-2.29s.14-1.57.38-2.29V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.98-3.09z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.98 3.09c.95-2.85 3.6-4.96 6.73-4.96z"/></svg>Continue with Google</GlowButton>
-    <GlowButton className="lovable-auth-button w-full" onClick={() => social('lovable')}>Continue with Lovable</GlowButton>
+    <GlowButton variant="ghost" className="w-full" disabled={busy} onClick={() => {setSignup(!signup);resetPhone();}}>{signup ? 'आधीच खाते आहे? लॉगिन' : 'नवीन खाते तयार करा'}</GlowButton>
     </Glass>
   </div>;
 }

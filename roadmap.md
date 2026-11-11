@@ -1,4 +1,6 @@
 # Live backend
+- [x] Remove Google/Lovable buttons and disable their providers; retain enabled email signup/login and add phone OTP signup/login forms and validation tests.
+- [ ] Enable and verify real SMS delivery; hosted auth settings report phone disabled. Requires Phone settings and an SMS delivery provider; no phone-provider configuration tool is available here.
 - [x] Add journalist profile editing, searchable news with approval/rejection/withdrawal and confirmed deletion; managed categories, districts, ads, live sources, bulletins, payment records and publishing-access suspension.
 - [ ] Verify authenticated admin CRUD, journalist submission → approval → public display, and publishing-access suspension end-to-end; no auth accounts exist yet. Permanent auth-account deletion and real payment transfer are not implemented.
 - [x] Add text-only submission and device-powered news listening without AI credits or API calls; validation and speech-control tests pass. Actual installed-phone audio remains unverified because the test browser has no Marathi/Hindi voice.
