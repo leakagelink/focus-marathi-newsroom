@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { BackButton } from '@/components/BackButton';
 import { Button } from '@/components/ui/button';
 import { ProfileEditor } from './ProfileEditor';
+import { sampleNews } from '@/lib/sample-news';
 
 const CLIPS: { k: ClipType; t: string; d: string; sec: string }[] = [
   { k: "location", t: "Location Visual", d: "10 सेकंद", sec: "0:10" },
@@ -169,7 +170,7 @@ function UploadForm({ onDone }: { onDone: () => void }) {
         <div className="mb-1 text-xs font-semibold">बातमीची स्क्रिप्ट <span className="text-faint">(80 - 100 शब्द)</span></div>
         <textarea className={`${inputCls} h-24 resize-none`} value={script} onChange={(e) => setScript(e.target.value)} placeholder="सातारा जिल्ह्यातील कराड तालुक्यातील..." />
         <div className="flex justify-between text-[10px] text-faint">
-          <button className="text-neon" onClick={() => { setHeadline("कराड : अतिवृष्टीग्रस्त शेतकऱ्यांना तातडीची मदत द्या"); setScript("सातारा जिल्ह्यातील कराड तालुक्यातील शेतकऱ्यांनी पिक विमा मिळावा यासाठी तहसील कार्यालयासमोर निवेदन दिले. अतिवृष्टीमुळे सोयाबीन, भात आणि ऊस पिकांचे मोठे नुकसान झाले आहे. शेतकरी संघटनांनी प्रशासनाकडे तातडीने पंचनामे पूर्ण करण्याची मागणी केली आहे. नुकसान भरपाई न मिळाल्यास आंदोलन करण्याचा इशाराही देण्यात आला आहे."); }}>नमुना भरा</button>
+          <button className="text-neon" onClick={() => { setHeadline(sampleNews.headline); setScript(sampleNews.script); }}>नमुना भरा</button>
           <span className={words > 100 ? "text-neon" : ""}>{words} / 100 शब्द · {script.length} अक्षरे</span>
         </div>
       </div>

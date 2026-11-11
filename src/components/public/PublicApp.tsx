@@ -7,7 +7,7 @@ import { DISTRICTS, districtName } from "@/data/maharashtra";
 import { IMAGES, SAMPLE_VIDEOS } from "@/data/mock";
 import type { NewsArticle } from "@/types";
 import { NewsAudio } from './NewsAudio';
-import { isPublished } from '@/lib/public-news';
+import { hasPublishedBulletin, isPublished } from '@/lib/public-news';
 
 const tabs = ["Home", "Live TV", "महाराष्ट्र", "जिल्हे", "विधानसभा"] as const;
 const tiles = [
@@ -120,7 +120,7 @@ export function PublicApp() {
       {tab === "superfast" && (
         <div className="space-y-2 px-3">
           <Glass red className="p-3"><div className="flex items-center gap-2 font-bold"><Zap className="size-5 text-neon" />सुपरफास्ट 100</div>
-            <p className="text-xs text-muted-foreground">{published ? "आजचे बुलेटिन प्रकाशित ✓" : "पुढील बुलेटिन लवकरच..."}</p></Glass>
+            <p className="text-xs text-muted-foreground">{hasPublishedBulletin(bulletinIds.length ? bulletinIds : published ? bulletin : [], news) ? "आजचे बुलेटिन प्रकाशित ✓" : "पुढील बुलेटिन लवकरच..."}</p></Glass>
           {(bulletinIds.length?bulletinIds:bulletin).map((id, i) => { const n = news.find((x) => x.id === id && isPublished(x.status)); return n && (
             <button key={id} onClick={() => setOpen(n)} className="glass flex w-full items-center gap-2 rounded-xl p-2 text-left text-xs">
               <span className="w-6 text-center font-bold text-neon">{i + 1}</span>{n.headline}
