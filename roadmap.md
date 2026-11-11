@@ -1,4 +1,5 @@
 # Live backend
+- [ ] Run authenticated news submission, approval, withdrawal, content management and public/mobile checks; remove clearly labeled test records afterwards.
 - [x] Verify faster authenticated profile opening independently of slow news requests; real signed-in mobile profile opens while news is delayed eight seconds, and regression tests pass.
 - [x] Remove Google/Lovable buttons and disable their providers; retain enabled email signup/login and add phone OTP signup/login forms and validation tests.
 - [ ] Enable and verify real SMS delivery; hosted auth settings report phone disabled. Requires Phone settings and an SMS delivery provider; no phone-provider configuration tool is available here.
