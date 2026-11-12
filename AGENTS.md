@@ -51,3 +51,4 @@ use the editor.
 - Use one shared Logo component for screen branding and derive install icons and favicon from the same supplied image so replacements stay consistent.
 - Keep the online Android wrapper configuration in capacitor.config.json with a minimal www entry and an exact-host HTTPS navigation allowlist; this prevents canonical-domain redirects escaping the WebView without allowing arbitrary sites native-plugin access. Local Android projects must sync and rebuild to receive changes.
 - Ads live in app_content kind=advertisement with data.placement/size/image/text/url; public AdSlot renders them per placement with a visible AD label.
+- Subcategories are app_content category rows with data.parent naming a main category; stories store the most specific name and parent filters include their subcategories.

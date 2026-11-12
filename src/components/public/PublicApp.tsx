@@ -1,3 +1,4 @@
+import { mainCategories, subCategories, parentOf, matchesCategory } from '@/lib/categories';
 import { AdSlot } from '@/components/public/AdSlot';
 import type { Advertisement } from '@/types';
 import { useEffect, useMemo, useState } from "react";
@@ -55,7 +56,7 @@ export function PublicApp() {
   const live = useMemo(() => news.filter((n) => isPublished(n.status))
     .filter((n) => district === "all" || n.districtId === district)
     .filter(n => tab !== 'विधानसभा' || !selectedRegion || selectedRegion.districtIds.includes(n.districtId))
-    .filter(n=>!tab.startsWith('category:')||n.category===tab.slice(9)), [news, district, tab, selectedRegion]);
+    .filter(n=>!tab.startsWith('category:')||matchesCategory(categories,n.category,tab.slice(9))), [news, district, tab, selectedRegion, categories]);
 
   if (splash) return (
     <button onClick={() => setSplash(false)} className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden text-center">
@@ -91,7 +92,8 @@ export function PublicApp() {
         ))}
       </div>
 
-      {categories.length>0 && <div className="flex gap-2 overflow-x-auto px-3 pb-2">{categories.map(c=><button key={c.id} className="glass shrink-0 rounded-md px-3 py-1 text-xs" onClick={()=>go(`category:${c.name}`)}>{c.name}</button>)}</div>}
+      {categories.length>0 && <div className="flex gap-2 overflow-x-auto px-3 pb-2">{mainCategories(categories).map(c=><button key={c.id} aria-pressed={tab===`category:${c.name}`} className="glass shrink-0 rounded-md px-3 py-1 text-xs" onClick={()=>go(`category:${c.name}`)}>{c.name}</button>)}</div>}
+      {tab.startsWith('category:') && (()=>{const name=tab.slice(9); const parent=categories.find(c=>c.name===name); const base=parent&&parentOf(parent)?parentOf(parent):name; const subs=subCategories(categories,base); return subs.length>0 && <div className="flex gap-2 overflow-x-auto px-3 pb-2"><button className={`shrink-0 rounded-md border px-2.5 py-0.5 text-[11px] ${name===base?'border-primary text-neon':'border-glass-border'}`} onClick={()=>go(`category:${base}`)}>सर्व</button>{subs.map(s=><button key={s.id} className={`shrink-0 rounded-md border px-2.5 py-0.5 text-[11px] ${name===s.name?'border-primary text-neon':'border-glass-border'}`} onClick={()=>go(`category:${s.name}`)}>{s.name}</button>)}</div>;})()}
       {tab.startsWith('category:') && <div className="px-3"><List title={tab.slice(9)} items={live} onOpen={setOpen} /></div>}
 
       {(tab === "Home" || tab === "Live TV" || tab === "महाराष्ट्र") && (

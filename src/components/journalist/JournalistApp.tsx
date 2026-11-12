@@ -1,3 +1,4 @@
+import { mainCategories, subCategories } from '@/lib/categories';
 import { useMemo, useRef, useState } from "react";
 import { ArrowLeft, CheckCircle2, CloudUpload, Loader2, Play, Upload, Wallet, X, FileVideo, ListChecks, UserRound } from "lucide-react";
 import { toast } from "sonner";
@@ -82,7 +83,9 @@ function UploadForm({ onDone }: { onDone: () => void }) {
   const userId = useStore(s => s.userId);
   const paths = useRef<Partial<Record<ClipType,string>>>({});
   const content = useStore(s=>s.content.filter(c=>c.active));
-  const availableCategories = content.filter(c=>c.kind==='category').map(c=>c.name);
+  const categoryRows = content.filter(c=>c.kind==='category');
+  const availableCategories = mainCategories(categoryRows).map(c=>c.name);
+  const [subCat, setSubCat] = useState('');
   const availableDistricts = content.filter(c=>c.kind==='district').map(c=>({id:String(c.data['code']||c.name),name:c.name}));
   const [prog, setProg] = useState<Record<ClipType, number>>({ location: 0, anchor: 0, byte1: 0, byte2: 0 });
   const [preview, setPreview] = useState<{ k: ClipType; url: string } | null>(null);
@@ -135,7 +138,7 @@ function UploadForm({ onDone }: { onDone: () => void }) {
     if (!scriptStatus.valid) return;
     setBusy(true);
     try {
-      const id = await actions.submitNews({ id:'', headline: headline.trim(), script: script.trim(), category: cat, districtId: district, constituency: seat, reporterId: userId ?? '', clipPaths:textOnly ? {} : paths.current,
+      const id = await actions.submitNews({ id:'', headline: headline.trim(), script: script.trim(), category: subCat || cat, districtId: district, constituency: seat, reporterId: userId ?? '', clipPaths:textOnly ? {} : paths.current,
         createdAt: new Date().toISOString(), status: "pending", importance: "normal", image: IMAGES.farmer,
         clips: { location: !textOnly, anchor: !textOnly, byte1: !textOnly, byte2: !textOnly }, urgent: false, aiVoice: false, views: 0 });
       setDone(id);
@@ -182,7 +185,8 @@ function UploadForm({ onDone }: { onDone: () => void }) {
           {seats.map((c) => <option key={c.id}>{c.name}</option>)}
         </select>
       </div>
-      <select className={`${inputCls} bg-card`} value={cat} onChange={(e) => setCat(e.target.value as Category)}>{(availableCategories.length?availableCategories:CATEGORIES).map((c) => <option key={c}>{c}</option>)}</select>
+      <select className={`${inputCls} bg-card`} value={cat} onChange={(e) => { setCat(e.target.value as Category); setSubCat(''); }}>{(availableCategories.length?availableCategories:CATEGORIES).map((c) => <option key={c}>{c}</option>)}</select>
+      {subCategories(categoryRows,cat).length>0 && <select aria-label="उप-वर्ग" className={`${inputCls} bg-card`} value={subCat} onChange={(e) => setSubCat(e.target.value)}><option value="">उप-वर्ग (ऐच्छिक)</option>{subCategories(categoryRows,cat).map(s => <option key={s.id}>{s.name}</option>)}</select>}
       <div>
         <label htmlFor="news-script" className="mb-1 block text-xs font-semibold">बातमीची स्क्रिप्ट <span className="text-faint">(80 - 100 शब्द)</span></label>
         <textarea id="news-script" aria-describedby="news-script-status" aria-invalid={script.length > 0 && !scriptStatus.valid} className={`${inputCls} h-24 resize-none`} value={script} onChange={(e) => setScript(e.target.value)} placeholder="सातारा जिल्ह्यातील कराड तालुक्यातील..." />
