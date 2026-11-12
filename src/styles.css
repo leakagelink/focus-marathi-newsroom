@@ -132,7 +132,19 @@
 @keyframes livepulse { 0%,100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--primary) 70%, transparent); } 50% { box-shadow: 0 0 0 6px transparent; } }
 @keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 @keyframes vu { 0%,100% { transform: scaleY(0.3); } 50% { transform: scaleY(1); } }
+@keyframes newsin { from { opacity: 0; transform: translate3d(-18px, 0, 0); } to { opacity: 1; transform: translate3d(0, 0, 0); } }
+@keyframes breakingdot { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.3; transform: scale(0.65); } }
+@keyframes breakingshine { 0% { transform: translateX(-140%) skewX(-14deg); } 60%,100% { transform: translateX(320%) skewX(-14deg); } }
+@keyframes breakingline { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @utility animate-ticker { animation: ticker 30s linear infinite; }
 @utility animate-live { animation: livepulse 1.6s ease-in-out infinite; }
 @utility animate-floaty { animation: floaty 6s ease-in-out infinite; }
 @utility animate-vu { animation: vu 0.9s ease-in-out infinite; transform-origin: bottom; }
+@utility animate-news-in { animation: newsin 0.55s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@utility animate-breaking-dot { animation: breakingdot 1.2s ease-in-out infinite; }
+@utility animate-breaking-shine { animation: breakingshine 3s ease-in-out infinite; }
+@utility animate-breaking-line { animation: breakingline 8s linear both; transform-origin: left center; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-news-in, .animate-breaking-dot, .animate-breaking-shine, .animate-breaking-line { animation: none; }
+}
