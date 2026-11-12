@@ -16,7 +16,7 @@ export function NewsVideo({ src, label, className = 'aspect-video w-full', previ
 }
 
 function VideoSource({ src, label, className, preview, autoPlay, onEnded }: {
-  src: string | undefined; label: string; className: string; preview: boolean; autoPlay: boolean; onEnded?: () => void;
+  src: string | undefined; label: string; className: string; preview: boolean; autoPlay: boolean; onEnded?: (() => void) | undefined;
 }) {
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
