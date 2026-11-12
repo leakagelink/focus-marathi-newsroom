@@ -1,0 +1,3 @@
+CREATE POLICY "ad_images_editor_insert" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'ad-images' AND public.is_editor());
+CREATE POLICY "ad_images_editor_update" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'ad-images' AND public.is_editor()) WITH CHECK (bucket_id = 'ad-images' AND public.is_editor());
+CREATE POLICY "ad_images_editor_delete" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'ad-images' AND public.is_editor());

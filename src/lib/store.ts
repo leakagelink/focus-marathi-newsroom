@@ -104,13 +104,20 @@ export async function refreshCloud() {
     }));
     return { id:n.id, headline:n.headline, script:n.script, category:n.category as NewsArticle['category'], districtId:n.district_id, constituency:n.constituency, reporterId:n.reporter_id, createdAt:n.created_at, status:n.status as NewsStatus, importance:n.importance as NewsArticle['importance'], image:n.image || IMAGES.farmer, clips:{location:!!paths.location,anchor:!!paths.anchor,byte1:!!paths.byte1,byte2:!!paths.byte2}, clipPaths:paths, clipUrls, urgent:n.urgent, aiVoice:n.ai_voice, views:n.views, feedback:n.feedback ?? undefined };
   }));
+  const adImages: Record<string,string> = {};
+  await Promise.all((content.data ?? []).filter(c=>c.kind==='advertisement').map(async c => {
+    const img = String((c.data as Record<string,unknown>)['image'] ?? '');
+    if (!img || /^https?:\/\//.test(img)) { adImages[c.id] = img; return; }
+    const { data } = await supabase.storage.from('ad-images').createSignedUrl(img, 60*60*24*7);
+    adImages[c.id] = data?.signedUrl ?? '';
+  }));
   if (version !== refreshVersion) return;
   set(() => ({ userId:user?.id ?? null, ready:true, role, news:mapped,
     breaking:(breaking.data ?? []).map((b) => ({id:b.id,text:b.text,region:b.region,minutes:b.minutes,createdAt:b.created_at})),
     journalists:(profiles.data ?? []).map((p) => ({id:p.id,name:p.name,role:'पत्रकार',districtId:p.district_id,constituencyId:p.constituency,avatar:p.avatar,code:'',phone:p.phone,email:p.contact_email,rating:0,submitted:mapped.filter(n=>n.reporterId===p.id).length,approved:mapped.filter(n=>n.reporterId===p.id && ['approved','broadcasted'].includes(n.status)).length,status:'verified' as const})),
     content:(content.data ?? []).map(c=>({...c,data:c.data as Record<string,unknown>})),
     payments:(payments.data ?? []).map(p=>({id:p.id,journalistId:p.journalist_id,month:p.month,base:Number(p.amount),stories:0,exclusives:0,status:p.status==='paid'?'paid':'processing'})),
-    ads:(content.data ?? []).filter(c=>c.kind==='advertisement'&&c.active).map(c=>({id:c.id,advertiser:c.name,contact:'',type:'display',target:'',start:'',end:'',impressions:0,clicks:0,budget:0,paid:false,active:c.active,url:String((c.data as Record<string,unknown>)['url'] ?? ''),text:String((c.data as Record<string,unknown>)['text'] ?? ''),image:String((c.data as Record<string,unknown>)['image'] ?? ''),placement:String((c.data as Record<string,unknown>)['placement'] ?? 'home_feed'),size:String((c.data as Record<string,unknown>)['size'] ?? 'small')})),
+    ads:(content.data ?? []).filter(c=>c.kind==='advertisement'&&c.active).map(c=>({id:c.id,advertiser:c.name,contact:'',type:'display',target:'',start:'',end:'',impressions:0,clicks:0,budget:0,paid:false,active:c.active,url:String((c.data as Record<string,unknown>)['url'] ?? ''),text:String((c.data as Record<string,unknown>)['text'] ?? ''),image:adImages[c.id] ?? '',placement:String((c.data as Record<string,unknown>)['placement'] ?? 'home_feed'),size:String((c.data as Record<string,unknown>)['size'] ?? 'small')})),
     ...(settings.data?.data as Partial<Pick<State,'onAir'|'source'|'overlays'|'platforms'|'nowPlaying'|'bulletin'|'bulletinPublished'>> ?? {}),
   }));
 }

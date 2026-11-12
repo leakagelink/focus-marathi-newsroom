@@ -1,0 +1,1 @@
+CREATE POLICY "ad_images_read" ON storage.objects FOR SELECT TO anon, authenticated USING (bucket_id = 'ad-images');
