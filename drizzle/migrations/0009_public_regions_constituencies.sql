@@ -1,0 +1,2 @@
+DROP POLICY IF EXISTS public_content ON public.app_content;
+CREATE POLICY public_content ON public.app_content FOR SELECT TO anon, authenticated USING (active AND kind = ANY (ARRAY['category','district','advertisement','live','bulletin','region','constituency']));

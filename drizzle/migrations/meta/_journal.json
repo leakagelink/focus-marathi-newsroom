@@ -64,6 +64,13 @@
       "when": 1794493139848,
       "tag": "0008_news_thumbs_storage",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1794493623764,
+      "tag": "0009_public_regions_constituencies",
+      "breakpoints": true
     }
   ]
 }

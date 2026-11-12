@@ -87,7 +87,11 @@ function UploadForm({ onDone }: { onDone: () => void }) {
   const categoryRows = content.filter(c=>c.kind==='category');
   const availableCategories = mainCategories(categoryRows).map(c=>c.name);
   const [subCat, setSubCat] = useState('');
-  const availableDistricts = content.filter(c=>c.kind==='district').map(c=>({id:String(c.data['code']||c.name),name:c.name}));
+  const availableDistricts = content.filter(c=>c.kind==='district').map(c=>({id:String(c.data['code']||c.name),name:c.name,region:String(c.data['region'] ?? '')}));
+  const dbRegions = content.filter(c=>c.kind==='region').map(c=>({id:String(c.data['code']||c.name),name:c.name,seats:Number(c.data['seats'])||0}));
+  const regions = dbRegions.length ? dbRegions.map(r=>({...r,districtIds:availableDistricts.length ? availableDistricts.filter(d=>d.region===r.id).map(d=>d.id) : ASSEMBLY_REGIONS.find(a=>a.id===r.id)?.districtIds ?? []})) : ASSEMBLY_REGIONS;
+  const dbSeats = content.filter(c=>c.kind==='constituency').map(c=>({id:c.id,name:c.name,districtId:String(c.data['district'] ?? '')}));
+  const allSeats = dbSeats.length ? dbSeats : CONSTITUENCIES;
   const [prog, setProg] = useState<Record<ClipType, number>>({ location: 0, anchor: 0, byte1: 0, byte2: 0 });
   const [preview, setPreview] = useState<{ k: ClipType; url: string } | null>(null);
   const [urls, setUrls] = useState<Partial<Record<ClipType, string>>>({});
@@ -95,11 +99,11 @@ function UploadForm({ onDone }: { onDone: () => void }) {
   const [headline, setHeadline] = useState("");
   const [textOnly, setTextOnly] = useState(false);
   const [district, setDistrict] = useState("satara");
-  const seats = useMemo(() => CONSTITUENCIES.filter((c) => c.districtId === district), [district]);
+  const seats = useMemo(() => allSeats.filter((c) => c.districtId === district), [allSeats, district]);
   const [seat, setSeat] = useState("कराड दक्षिण");
   const [region, setRegion] = useState("western");
-  const regionDistricts = (availableDistricts.length?availableDistricts:DISTRICTS).filter(d => ASSEMBLY_REGIONS.find(r=>r.id===region)?.districtIds.includes(d.id) ?? true);
-  const pickDistrict = (id: string) => { setDistrict(id); setSeat(CONSTITUENCIES.find((c) => c.districtId === id)?.name ?? ''); };
+  const regionDistricts = (availableDistricts.length?availableDistricts:DISTRICTS).filter(d => regions.find(r=>r.id===region)?.districtIds.includes(d.id) ?? true);
+  const pickDistrict = (id: string) => { setDistrict(id); setSeat(allSeats.find((c) => c.districtId === id)?.name ?? ''); };
   const [cat, setCat] = useState<Category>("शेती");
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<string | null>(null);
@@ -182,8 +186,8 @@ function UploadForm({ onDone }: { onDone: () => void }) {
         );
       })}
       <input className={inputCls} placeholder="बातमीचे शीर्षक" value={headline} onChange={(e) => setHeadline(e.target.value)} maxLength={120} />
-      <select aria-label="विभाग" className={`${inputCls} bg-card`} value={region} onChange={(e) => { setRegion(e.target.value); const first = ASSEMBLY_REGIONS.find(r=>r.id===e.target.value)?.districtIds[0]; if (first) pickDistrict(first); }}>
-        {ASSEMBLY_REGIONS.map(r => <option key={r.id} value={r.id}>{r.name} ({r.seats.toLocaleString('mr-IN')})</option>)}
+      <select aria-label="विभाग" className={`${inputCls} bg-card`} value={region} onChange={(e) => { setRegion(e.target.value); const first = regions.find(r=>r.id===e.target.value)?.districtIds[0]; if (first) pickDistrict(first); }}>
+        {regions.map(r => <option key={r.id} value={r.id}>{r.name} ({r.seats.toLocaleString('mr-IN')})</option>)}
       </select>
       <div className="grid grid-cols-2 gap-2">
         <select aria-label="जिल्हा" className={`${inputCls} bg-card`} value={district} onChange={(e) => pickDistrict(e.target.value)}>

@@ -54,3 +54,4 @@ use the editor.
 - Subcategories are app_content category rows with data.parent naming a main category; stories store the most specific name and parent filters include their subcategories.
 - News videos are never muted by default: play() is attempted with sound, and only if the browser blocks audible autoplay does the player fall back to muted with a one-tap sound button, so every clip plays with audio wherever autoplay is allowed.
 - Shared story links use /news/$id whose SSR head carries the story thumbnail; thumbnails are captured client-side from the uploaded clip into the private news-thumbs bucket (path in news.image), readable once the story is published.
+- Regions, districts and constituencies are app_content rows (region data.code/seats, district data.code/region, constituency data.district); the journalist form reads them with the static maharashtra.ts lists only as fallback.
