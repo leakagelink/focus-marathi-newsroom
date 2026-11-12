@@ -3,7 +3,7 @@ import { ArrowLeft, CheckCircle2, CloudUpload, Loader2, Play, Upload, Wallet, X,
 import { toast } from "sonner";
 import { Glass, GlowButton, Logo, Pill, inputCls } from "@/components/ui/glass";
 import { actions, earnings, refreshCloud, useStore } from "@/lib/store";
-import { CONSTITUENCIES, DISTRICTS, districtName } from "@/data/maharashtra";
+import { ASSEMBLY_REGIONS, CONSTITUENCIES, DISTRICTS, districtName } from "@/data/maharashtra";
 import { CATEGORIES, IMAGES } from "@/data/mock";
 import type { Category, ClipType, NewsStatus } from "@/types";
 import { AccountForm } from '@/components/AccountForm';
@@ -93,6 +93,9 @@ function UploadForm({ onDone }: { onDone: () => void }) {
   const [district, setDistrict] = useState("satara");
   const seats = useMemo(() => CONSTITUENCIES.filter((c) => c.districtId === district), [district]);
   const [seat, setSeat] = useState("कराड दक्षिण");
+  const [region, setRegion] = useState("western");
+  const regionDistricts = (availableDistricts.length?availableDistricts:DISTRICTS).filter(d => ASSEMBLY_REGIONS.find(r=>r.id===region)?.districtIds.includes(d.id) ?? true);
+  const pickDistrict = (id: string) => { setDistrict(id); setSeat(CONSTITUENCIES.find((c) => c.districtId === id)?.name ?? ''); };
   const [cat, setCat] = useState<Category>("शेती");
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<string | null>(null);
@@ -165,9 +168,12 @@ function UploadForm({ onDone }: { onDone: () => void }) {
         );
       })}
       <input className={inputCls} placeholder="बातमीचे शीर्षक" value={headline} onChange={(e) => setHeadline(e.target.value)} maxLength={120} />
+      <select aria-label="विभाग" className={`${inputCls} bg-card`} value={region} onChange={(e) => { setRegion(e.target.value); const first = ASSEMBLY_REGIONS.find(r=>r.id===e.target.value)?.districtIds[0]; if (first) pickDistrict(first); }}>
+        {ASSEMBLY_REGIONS.map(r => <option key={r.id} value={r.id}>{r.name} ({r.seats.toLocaleString('mr-IN')})</option>)}
+      </select>
       <div className="grid grid-cols-2 gap-2">
-        <select className={`${inputCls} bg-card`} value={district} onChange={(e) => { setDistrict(e.target.value); setSeat(CONSTITUENCIES.find((c) => c.districtId === e.target.value)?.name ?? ''); }}>
-          {(availableDistricts.length?availableDistricts:DISTRICTS).map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+        <select aria-label="जिल्हा" className={`${inputCls} bg-card`} value={district} onChange={(e) => pickDistrict(e.target.value)}>
+          {regionDistricts.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
         </select>
         <select className={`${inputCls} bg-card`} value={seat} onChange={(e) => setSeat(e.target.value)}>
           {seats.map((c) => <option key={c.id}>{c.name}</option>)}
