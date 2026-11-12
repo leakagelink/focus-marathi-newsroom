@@ -167,6 +167,7 @@ function List({ title, items, onOpen, showSeat }: { title: string; items: NewsAr
 
 function Detail({ n, onBack, adName }: { n: NewsArticle; onBack: () => void; adName?: string | undefined }) {
   const [clip, setClip] = useState(0);
+  const breaking = useStore(s => s.breaking);
   const hasVideo = Object.values(n.clips).some(Boolean);
   const labels = ["Location", "Anchoring", "First Byte", "Second Byte"];
   const clipKeys = ['location', 'anchor', 'byte1', 'byte2'] as const;
@@ -177,7 +178,10 @@ function Detail({ n, onBack, adName }: { n: NewsArticle; onBack: () => void; adN
         <h2 className="flex-1 text-center font-bold">बातमीचा तपशील</h2>
         <span className="w-8" />
       </div>
-      {hasVideo && <NewsVideo src={n.clipUrls?.[clipKeys[clip] ?? 'location']} label={`${n.headline} — ${labels[clip]}`} autoPlay className="aspect-video w-full rounded-lg object-contain" />}
+      {hasVideo && <div>
+        <NewsVideo src={n.clipUrls?.[clipKeys[clip] ?? 'location']} label={`${n.headline} — ${labels[clip]}`} autoPlay className="aspect-video w-full rounded-t-lg object-contain" />
+        <BreakingNewsBar items={breaking} />
+      </div>}
       <h1 className="text-lg font-bold leading-snug">{n.headline}</h1>
       {!hasVideo && <NewsAudio key={n.id} headline={n.headline} script={n.script} />}
       <div className="flex flex-wrap gap-1.5 text-[11px]">
