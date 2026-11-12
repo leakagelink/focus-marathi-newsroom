@@ -31,7 +31,7 @@ use the editor.
 
 - Cloud Auth owns account identity; roles live in protected user_roles and database policies authorize every news/moderation/storage write, so browser UI cannot grant privileges.
 - Cloud news, breaking news and broadcast settings replace demo rows; private clip paths are signed for authorized readers, so pending reports stay private.
-- Public video uses a dedicated breaking-news band fed by the existing managed breaking rows, keeping regional headlines readable without a scrolling ticker.
+- Public video uses a dedicated breaking-news band fed by the existing managed breaking rows, shown as a continuous right-to-left ticker that pauses on hover.
 - Keep in-app headers as sticky siblings of expanding content inside the phone scroll container so both top headers and bottom navigation remain visible while scrolling.
 - Keep editorial assembly regions separate from administrative divisions and use their district IDs for public assembly filtering so regional totals and news selection stay consistent.
 - Use source-keyed NewsVideo for uploaded clip playback and previews, never sample posters; preserve clip identity on story changes and report media failures instead of showing unrelated imagery.
