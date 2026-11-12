@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { AlertCircle, RefreshCw } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { AlertCircle, RefreshCw, Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/ui/glass';
 import { LiveClock } from '@/components/LiveClock';
@@ -20,10 +20,28 @@ function VideoSource({ src, label, className, preview, autoPlay, onEnded }: {
 }) {
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const [soundBlocked, setSoundBlocked] = useState(false);
+  const ref = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !autoPlay) return;
+    el.muted = false;
+    el.play().catch(() => {
+      el.muted = true;
+      setSoundBlocked(true);
+      void el.play().catch(() => {});
+    });
+  }, [autoPlay, attempt, src]);
+
   if (!src || failed) return <div role={preview ? undefined : 'alert'} className={`${className} flex flex-col items-center justify-center gap-2 bg-card p-2 text-center text-xs text-muted-foreground`}>
     <AlertCircle className="size-5" />
     <span>{src ? 'व्हिडिओ चालला नाही' : 'व्हिडिओ उपलब्ध नाही'}</span>
-    {!preview && src && <><p>इंटरनेट तपासा. फाइल या उपकरणावर चालत नसेल तर MP4 (H.264/AAC) वापरा.</p><Button size="sm" variant="outline" onClick={() => { setFailed(false); setAttempt(n => n + 1); }}><RefreshCw className="size-4" />पुन्हा प्रयत्न करा</Button></>}
+    {!preview && src && <><p>इंटरनेट तपासा. फाइल या उपकरणावर चालत नसेल तर इंटरनेट तपासा. फाइल या उपकरणावर चालत नसेल तर MP4 (H.264/AAC) वापरा.</p><Button size="sm" variant="outline" onClick={() => { setFailed(false); setAttempt(n => n + 1); }}><RefreshCw className="size-4" />पुन्हा प्रयत्न करा</Button></>}
   </div>;
-  return <video key={attempt} aria-label={label} src={src} controls={!preview} autoPlay={autoPlay} muted playsInline preload={preview ? 'metadata' : 'auto'} onEnded={onEnded} onError={() => setFailed(true)} className={className} />;
+
+  return <>
+    <video ref={ref} key={attempt} aria-label={label} src={src} controls={!preview} autoPlay={autoPlay} playsInline preload={preview ? 'metadata' : 'auto'} onEnded={onEnded} onError={() => setFailed(true)} className={className} />
+    {!preview && soundBlocked && <Button size="sm" className="absolute bottom-16 left-2 z-20" onClick={() => { const el = ref.current; if (!el) return; el.muted = false; setSoundBlocked(false); void el.play().catch(() => {}); }}><Volume2 className="size-4" />आवाज सुरू करा</Button>}
+  </>;
 }

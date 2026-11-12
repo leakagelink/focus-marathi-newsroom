@@ -37,7 +37,7 @@ function Broadcast() {
         <p className="text-xs text-warning">प्रसारण प्रिव्ह्यू · YouTube / Facebook लाईव्ह जोडलेले नाही.</p>
         <div className="relative overflow-hidden rounded-xl">
           {s.source === "standby" ? <div className="grid aspect-video place-items-center bg-card"><Logo size="lg" /></div>
-            : liveUrl ? <video key={liveUrl} src={liveUrl} controls muted playsInline className="aspect-video w-full object-cover" /> : <div className="grid aspect-video place-items-center bg-card text-muted-foreground">लाईव्ह स्रोत जोडलेला नाही</div>}
+            : liveUrl ? <video key={liveUrl} src={liveUrl} controls playsInline className="aspect-video w-full object-cover" /> : <div className="grid aspect-video place-items-center bg-card text-muted-foreground">लाईव्ह स्रोत जोडलेला नाही</div>}
           {s.overlays.logo && <div className="absolute right-3 top-3"><Logo size="sm" /></div>}
           {s.overlays.headline && now && <div className="absolute inset-x-6 bottom-20 rounded bg-background/80 p-2 text-lg font-bold">{now.headline}</div>}
           {s.overlays.breaking && <div className="absolute inset-x-0 bottom-0"><Ticker items={s.breaking.map((b) => b.text)} /></div>}
