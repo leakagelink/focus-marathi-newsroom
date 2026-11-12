@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+export const CLIP_DURATION_SECONDS = { location: 5, anchor: 25, byte1: 60, byte2: 60 } as const;
+
 export const submissionSchema = z.object({
   headline: z.string().trim().min(10).max(120),
   script: z.string().trim().refine((s) => { const n = s.split(/\s+/).length; return n >= 80 && n <= 100; }, 'स्क्रिप्ट 80 ते 100 शब्दांची असावी'),

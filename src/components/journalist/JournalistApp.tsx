@@ -13,12 +13,13 @@ import { Button } from '@/components/ui/button';
 import { ProfileEditor } from './ProfileEditor';
 import { sampleNews } from '@/lib/sample-news';
 import { NewsVideo } from '@/components/NewsVideo';
+import { CLIP_DURATION_SECONDS } from '@/lib/news-validation';
 
-const CLIPS: { k: ClipType; t: string; d: string; sec: string }[] = [
-  { k: "location", t: "Location Visual", d: "10 सेकंद", sec: "0:10" },
-  { k: "anchor", t: "Anchoring", d: "20 सेकंद", sec: "0:20" },
-  { k: "byte1", t: "First Byte", d: "60 सेकंद", sec: "1:00" },
-  { k: "byte2", t: "Second Byte", d: "60 सेकंद", sec: "1:00" },
+const CLIPS: { k: ClipType; t: string }[] = [
+  { k: "location", t: "Location Visual" },
+  { k: "anchor", t: "Anchoring" },
+  { k: "byte1", t: "First Byte" },
+  { k: "byte2", t: "Second Byte" },
 ];
 const ME = "j1";
 type JTab = "upload" | "list" | "earn" | "profile";
@@ -149,7 +150,7 @@ function UploadForm({ onDone }: { onDone: () => void }) {
         return (
           <Glass key={c.k} className="flex items-center gap-2.5 p-2">
             <span className="grid size-6 place-items-center rounded-full bg-primary text-xs font-bold">{i + 1}</span>
-            <div className="flex-1 text-xs"><div className="font-semibold">{c.t} <span className="text-neon">*</span></div><div className="text-faint">({c.d})</div>
+            <div className="flex-1 text-xs"><div className="font-semibold">{c.t} <span className="text-neon">*</span></div><div className="text-faint">({CLIP_DURATION_SECONDS[c.k]} सेकंद)</div>
               {p > 0 && p < 100 && <div className="mt-1 h-1 overflow-hidden rounded bg-glass"><div className="h-full bg-primary transition-all" style={{ width: `${p}%` }} /></div>}
             </div>
             {p >= 100 ? (
