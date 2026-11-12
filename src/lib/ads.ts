@@ -17,6 +17,6 @@ export const AD_SIZE_CLASS: Record<AdSize, string> = {
 };
 export const isAdSize = (v: unknown): v is AdSize => AD_SIZES.some(s => s.value === v);
 export const isAdPlacement = (v: unknown): v is AdPlacement => AD_PLACEMENTS.some(p => p.value === v);
-export function adsFor<T extends { placement: string; active: boolean }>(ads: T[], placement: AdPlacement) {
-  return ads.filter(a => a.active && a.placement === placement);
+export function adsFor<T extends { placement?: string | undefined; active: boolean }>(ads: T[], placement: AdPlacement) {
+  return ads.filter(a => a.active && (a.placement ?? "home_feed") === placement);
 }
