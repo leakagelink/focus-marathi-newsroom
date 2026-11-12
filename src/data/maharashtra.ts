@@ -40,3 +40,12 @@ export const CONSTITUENCIES: Constituency[] = DISTRICTS.flatMap((d) =>
 );
 
 export const districtName = (id: string) => DISTRICTS.find((d) => d.id === id)?.name ?? id;
+
+// Editorial regions differ from the administrative divisions (Ahilyanagar belongs to Western Maharashtra here).
+export const ASSEMBLY_REGIONS = [
+  { id: 'north', name: 'उत्तर महाराष्ट्र व नाशिक', seats: 35, districtIds: ['nashik', 'dhule', 'nandurbar', 'jalgaon'] },
+  { id: 'vidarbha', name: 'विदर्भ', seats: 62, districtIds: DISTRICTS.filter(d => d.division === 'अमरावती' || d.division === 'नागपूर').map(d => d.id) },
+  { id: 'marathwada', name: 'मराठवाडा', seats: 46, districtIds: DISTRICTS.filter(d => d.division === 'छत्रपती संभाजीनगर').map(d => d.id) },
+  { id: 'western', name: 'पश्चिम महाराष्ट्र', seats: 70, districtIds: [...DISTRICTS.filter(d => d.division === 'पुणे').map(d => d.id), 'ahilyanagar'] },
+  { id: 'konkan', name: 'कोकण व मुंबई', seats: 75, districtIds: DISTRICTS.filter(d => d.division === 'कोकण').map(d => d.id) },
+];

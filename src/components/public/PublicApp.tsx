@@ -3,7 +3,7 @@ import { ArrowLeft, Bell, Bookmark, Building2, CalendarDays, Clapperboard, Home,
 import { toast } from "sonner";
 import { Glass, LiveDot, Logo, Pill } from "@/components/ui/glass";
 import { useStore } from "@/lib/store";
-import { DISTRICTS, districtName } from "@/data/maharashtra";
+import { ASSEMBLY_REGIONS, DISTRICTS, districtName } from "@/data/maharashtra";
 import { IMAGES } from "@/data/mock";
 import type { NewsArticle } from "@/types";
 import { NewsAudio } from './NewsAudio';
@@ -28,6 +28,8 @@ export function PublicApp() {
   const [history, setHistory] = useState<string[]>([]);
   const [open, setOpen] = useState<NewsArticle | null>(null);
   const [district, setDistrict] = useState("all");
+  const [region, setRegion] = useState('all');
+  const selectedRegion = ASSEMBLY_REGIONS.find(r => r.id === region);
   const news = useStore((s) => s.news);
   const content = useStore(s=>s.content.filter(c=>c.active));
   const categories = content.filter(c=>c.kind==='category');
@@ -47,7 +49,9 @@ export function PublicApp() {
   const back = () => { const prev = history.at(-1) ?? "Home"; setHistory((h) => h.slice(0, -1)); setTab(prev); };
 
   const live = useMemo(() => news.filter((n) => isPublished(n.status))
-    .filter((n) => district === "all" || n.districtId === district).filter(n=>!tab.startsWith('category:')||n.category===tab.slice(9)), [news, district, tab]);
+    .filter((n) => district === "all" || n.districtId === district)
+    .filter(n => tab !== 'विधानसभा' || !selectedRegion || selectedRegion.districtIds.includes(n.districtId))
+    .filter(n=>!tab.startsWith('category:')||n.category===tab.slice(9)), [news, district, tab, selectedRegion]);
 
   if (splash) return (
     <button onClick={() => setSplash(false)} className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden text-center">
@@ -115,9 +119,16 @@ export function PublicApp() {
 
       {(tab === "जिल्हे" || tab === "विधानसभा") && (
         <div className="space-y-3 px-3">
+          {tab === 'विधानसभा' && <div>
+            <table className="w-full text-sm">
+              <thead><tr className="border-b border-glass-border text-muted-foreground"><th className="py-2 text-left">विभाग / जिल्हे</th><th className="py-2 text-right">मतदारसंघ</th></tr></thead>
+              <tbody>{ASSEMBLY_REGIONS.map(r => <tr key={r.id} className="border-b border-glass-border"><td className="py-1"><Button variant="ghost" aria-pressed={region===r.id} className={`h-auto w-full justify-start whitespace-normal px-0 py-2 text-left ${region===r.id ? 'text-neon' : ''}`} onClick={() => { setRegion(r.id); setDistrict('all'); }}>{r.name}</Button></td><td className="text-right tabular-nums">{r.seats.toLocaleString('mr-IN')}</td></tr>)}</tbody>
+              <tfoot><tr><th className="py-2 text-left"><Button variant="ghost" className="px-0 font-bold" aria-pressed={region==='all'} onClick={() => { setRegion('all'); setDistrict('all'); }}>एकूण</Button></th><th className="text-right">{ASSEMBLY_REGIONS.reduce((sum,r)=>sum+r.seats,0).toLocaleString('mr-IN')}</th></tr></tfoot>
+            </table>
+          </div>}
           <select value={district} onChange={(e) => setDistrict(e.target.value)} className="w-full rounded-xl glass bg-card px-3 py-2 text-sm">
-            <option value="all">सर्व जिल्हे (36)</option>
-            {(districts.length ? districts.map(d=>({id:String(d.data['code']||d.name),name:d.name})) : DISTRICTS).map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+            <option value="all">सर्व जिल्हे</option>
+            {(districts.length ? districts.map(d=>({id:String(d.data['code']||d.name),name:d.name})) : DISTRICTS).filter(d => tab !== 'विधानसभा' || !selectedRegion || selectedRegion.districtIds.includes(d.id)).map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
           </select>
           <List title={tab === "जिल्हे" ? "जिल्हा बातम्या" : "विधानसभा बातम्या"} items={live} onOpen={setOpen} showSeat={tab === "विधानसभा"} />
         </div>
