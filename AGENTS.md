@@ -41,6 +41,7 @@ use the editor.
 - Publish account/profile readiness independently of feeds and clip signing, and reuse the loaded own profile in the editor so unrelated data cannot delay account access.
 - New accounts receive only journalist access; owner administrator access must be assigned to a verified, explicitly identified account, never the first signup.
 - Text-only news uses empty clip_paths; video submissions still require four owned clips, preserving moderation and validation.
+- Share script word-count validation between the upload form and submission schema, with inline missing/excess feedback and an invalid-script submit guard to prevent repeated error notifications.
 - News listening uses browser SpeechSynthesis only after hydration, preferring Marathi then Hindi voices and cancelling on exit; unsupported devices show an unavailable state instead of calling a paid service.
 - Admin management uses separate news, profile, content, payment and account-access editors with explicit save and confirmed delete; database policies enforce editorial versus administrator permissions.
 - Show moderation actions directly beside each admin news row; review details remain optional so pending submissions never hide approval behind selection.

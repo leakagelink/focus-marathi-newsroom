@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { ProfileEditor } from './ProfileEditor';
 import { sampleNews } from '@/lib/sample-news';
 import { NewsVideo } from '@/components/NewsVideo';
-import { CLIP_DURATION_SECONDS } from '@/lib/news-validation';
+import { CLIP_DURATION_SECONDS, getScriptWordStatus } from '@/lib/news-validation';
 
 const CLIPS: { k: ClipType; t: string }[] = [
   { k: "location", t: "Location Visual" },
@@ -102,7 +102,9 @@ function UploadForm({ onDone }: { onDone: () => void }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const pending = useRef<ClipType | null>(null);
   const uploading = useRef(new Set<ClipType>());
-  const words = script.trim() ? script.trim().split(/\s+/).length : 0;
+  const scriptStatus = getScriptWordStatus(script);
+  const { words } = scriptStatus;
+  const scriptMessage = scriptStatus.missing ? `आणखी ${scriptStatus.missing} शब्द जोडा (किमान 80 शब्द).` : scriptStatus.excess ? `${scriptStatus.excess} शब्द कमी करा (जास्तीत जास्त 100 शब्द).` : '';
 
   const startUpload = async (k: ClipType, file: File) => {
     if (!userId || busy || uploading.current.has(k)) return;
@@ -125,11 +127,12 @@ function UploadForm({ onDone }: { onDone: () => void }) {
   const pick = (k: ClipType) => { pending.current = k; fileRef.current?.click(); };
 
   const submit = async () => {
+    if (busy) return;
     if (uploading.current.size) { toast.error('व्हिडिओ अपलोड पूर्ण होऊ द्या'); return; }
     const missing = CLIPS.filter((c) => prog[c.k] < 100);
     if (!textOnly && missing.length) { toast.error(`अनिवार्य क्लिप बाकी: ${missing.map((m) => m.t).join(", ")}`); return; }
     if (headline.trim().length < 10) { toast.error("कृपया बातमीचे शीर्षक टाका"); return; }
-    if (words < 80 || words > 100) { toast.error("स्क्रिप्ट 80 ते 100 शब्दांची असावी"); return; }
+    if (!scriptStatus.valid) return;
     setBusy(true);
     try {
       const id = await actions.submitNews({ id:'', headline: headline.trim(), script: script.trim(), category: cat, districtId: district, constituency: seat, reporterId: userId ?? '', clipPaths:textOnly ? {} : paths.current,
@@ -181,14 +184,15 @@ function UploadForm({ onDone }: { onDone: () => void }) {
       </div>
       <select className={`${inputCls} bg-card`} value={cat} onChange={(e) => setCat(e.target.value as Category)}>{(availableCategories.length?availableCategories:CATEGORIES).map((c) => <option key={c}>{c}</option>)}</select>
       <div>
-        <div className="mb-1 text-xs font-semibold">बातमीची स्क्रिप्ट <span className="text-faint">(80 - 100 शब्द)</span></div>
-        <textarea className={`${inputCls} h-24 resize-none`} value={script} onChange={(e) => setScript(e.target.value)} placeholder="सातारा जिल्ह्यातील कराड तालुक्यातील..." />
+        <label htmlFor="news-script" className="mb-1 block text-xs font-semibold">बातमीची स्क्रिप्ट <span className="text-faint">(80 - 100 शब्द)</span></label>
+        <textarea id="news-script" aria-describedby="news-script-status" aria-invalid={script.length > 0 && !scriptStatus.valid} className={`${inputCls} h-24 resize-none`} value={script} onChange={(e) => setScript(e.target.value)} placeholder="सातारा जिल्ह्यातील कराड तालुक्यातील..." />
         <div className="flex justify-between text-[10px] text-faint">
-          <button className="text-neon" onClick={() => { setHeadline(sampleNews.headline); setScript(sampleNews.script); }}>नमुना भरा</button>
-          <span className={words > 100 ? "text-neon" : ""}>{words} / 100 शब्द · {script.length} अक्षरे</span>
+          <Button variant="link" size="sm" className="h-auto p-0 text-[10px] text-neon" onClick={() => { setHeadline(sampleNews.headline); setScript(sampleNews.script); }}>नमुना भरा</Button>
+          <span className={!scriptStatus.valid ? "text-neon" : "text-success"}>{words} / 100 शब्द · {script.length} अक्षरे</span>
         </div>
+        <p id="news-script-status" role="status" className={`mt-1 text-xs ${scriptStatus.valid ? 'text-success' : 'text-neon'}`}>{scriptMessage || 'स्क्रिप्टची शब्दसंख्या योग्य आहे.'}</p>
       </div>
-      <GlowButton className="w-full py-3 text-base" onClick={submit} disabled={busy || Object.values(prog).some(p=>p>0 && p<100)}>
+      <GlowButton className="w-full py-3 text-base" onClick={submit} disabled={busy || !scriptStatus.valid || Object.values(prog).some(p=>p>0 && p<100)}>
         {busy ? <Loader2 className="size-5 animate-spin" /> : <CloudUpload className="size-5" />}{busy ? "अपलोड होत आहे..." : "बातमी अपलोड करा"}
       </GlowButton>
 
