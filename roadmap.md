@@ -1,4 +1,5 @@
 # Live backend
+- [x] Show admin-managed breaking headlines and regions directly below the public video, with mobile-friendly wrapping and headline navigation; verified saved-row public readback at mobile/desktop sizes and regression test.
 - [x] Correct uploaded-video previews and source identity across journalist, public and admin; verified latest stored WebM/MP4 playback, clip switching, authenticated four-clip admin review, mobile upload screen and nine regression tests. Installed-device playback remains outside this sandbox.
 - [x] Show approval/rejection beside every journalist post without requiring detail selection; verified authenticated save/readback, anonymous publication and rejection visibility, mobile fit, and temporary test cleanup.
 - [x] Add canonical-domain Capacitor configuration, exact-host navigation tests and PowerShell sync/rebuild instructions after confirming the old published address redirects to the custom domain.

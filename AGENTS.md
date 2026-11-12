@@ -31,6 +31,7 @@ use the editor.
 
 - Cloud Auth owns account identity; roles live in protected user_roles and database policies authorize every news/moderation/storage write, so browser UI cannot grant privileges.
 - Cloud news, breaking news and broadcast settings replace demo rows; private clip paths are signed for authorized readers, so pending reports stay private.
+- Public video uses a dedicated breaking-news band fed by the existing managed breaking rows, keeping regional headlines readable without a scrolling ticker.
 - Use source-keyed NewsVideo for uploaded clip playback and previews, never sample posters; preserve clip identity on story changes and report media failures instead of showing unrelated imagery.
 - A single root auth subscription refreshes the browser store after identity changes; generation guards discard outdated refreshes, preventing stale private state after sign-out.
 - Publish account/profile readiness independently of feeds and clip signing, and reuse the loaded own profile in the editor so unrelated data cannot delay account access.

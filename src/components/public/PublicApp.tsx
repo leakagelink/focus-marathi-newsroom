@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Bell, Bookmark, Building2, CalendarDays, Clapperboard, Home, Landmark, MapPin, Megaphone, Mic, Play, Search, Share2, Tv, UserRound, Users, Zap } from "lucide-react";
 import { toast } from "sonner";
-import { Glass, LiveDot, Logo, Pill, Ticker } from "@/components/ui/glass";
+import { Glass, LiveDot, Logo, Pill } from "@/components/ui/glass";
 import { useStore } from "@/lib/store";
 import { DISTRICTS, districtName } from "@/data/maharashtra";
 import { IMAGES } from "@/data/mock";
@@ -10,6 +10,7 @@ import { NewsAudio } from './NewsAudio';
 import { hasPublishedBulletin, isPublished } from '@/lib/public-news';
 import { NewsVideo } from '@/components/NewsVideo';
 import { Button } from '@/components/ui/button';
+import { BreakingNewsBar } from './BreakingNewsBar';
 
 const tabs = ["Home", "Live TV", "महाराष्ट्र", "जिल्हे", "विधानसभा"] as const;
 const tiles = [
@@ -86,14 +87,16 @@ export function PublicApp() {
 
       {(tab === "Home" || tab === "Live TV" || tab === "महाराष्ट्र") && (
         <div className="space-y-3 px-3">
-          <div className="relative overflow-hidden rounded-2xl border border-primary/40">
+          <div>
+          <div className="relative overflow-hidden rounded-t-lg border border-primary/40">
             {liveUrl && /^https:\/\//.test(liveUrl) ? <video controls playsInline src={liveUrl} poster={IMAGES.studio} className="aspect-video w-full" /> : <img src={IMAGES.studio} alt="FOCUS 24 studio preview" className="aspect-video w-full object-cover" />}
             {!liveUrl && <div className="absolute right-2 top-2"><Pill tone="gray">प्रसारण जोडलेले नाही</Pill></div>}
             <div className="pointer-events-none absolute top-2 left-2 bg-background/80 p-2 text-xs font-semibold">
               {nowPlaying ? nowPlaying.headline : "FOCUS 24 NEWS मराठी"}
             </div>
           </div>
-          <Ticker items={breaking.map((b) => b.text)} />
+          <BreakingNewsBar items={breaking} />
+          </div>
           {tab === "Home" && (
             <div className="grid grid-cols-4 gap-2">
               {tiles.map((t) => (
