@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { statusMeta } from '@/components/journalist/JournalistApp';
 import { toast } from 'sonner';
 import { inputCls } from '@/components/ui/glass';
+import { CheckCircle2, Eye, RefreshCw, XCircle } from 'lucide-react';
 
 export function NewsManager() {
   const news = useStore(s=>s.news);
@@ -17,15 +18,25 @@ export function NewsManager() {
   const [busy,setBusy] = useState(false);
   const [reason,setReason] = useState('');
   const current = news.find(n=>n.id===selected);
-  async function moderate(status:'approved'|'pending'|'rejected'|'revision') {
-    if(!current) return;
+  const filtered = news.filter(n=>(filter==='all'||n.status===filter)&&(!reporter||n.reporterId===reporter));
+  async function moderate(status:'approved'|'pending'|'rejected'|'revision', id = current?.id, feedback = reason) {
+    if(!id || busy) return;
     setBusy(true);
-    try { const {error}=await supabase.from('news').update({status,feedback:reason || null}).eq('id',current.id).select('id').single(); if(error) throw new Error(error.message); await refreshCloud(); toast.success('स्थिती जतन झाली'); } catch(e) {toast.error(e instanceof Error ? e.message : 'जतन झाले नाही');} finally {setBusy(false);}
+    try { const {error}=await supabase.from('news').update({status,feedback:feedback || null}).eq('id',id).select('id').single(); if(error) throw new Error(error.message); await refreshCloud(); toast.success('स्थिती जतन झाली'); } catch(e) {toast.error(e instanceof Error ? e.message : 'जतन झाले नाही');} finally {setBusy(false);}
   }
   return <section className="space-y-3">
+    <div className="flex items-center justify-between gap-2"><h2 className="font-bold">बातमी मंजुरी</h2><Button size="sm" variant="outline" disabled={busy} onClick={async()=>{setBusy(true);try{await refreshCloud();}finally{setBusy(false);}}}><RefreshCw className="size-4" />ताज्या पोस्ट</Button></div>
     <div className="grid gap-2 sm:grid-cols-2"><select aria-label="बातमी स्थिती" className={`${inputCls} bg-card`} value={filter} onChange={e=>setFilter(e.target.value)}><option value="all">सर्व बातम्या</option>{Object.entries(statusMeta).map(([v,m])=><option key={v} value={v}>{m.l}</option>)}</select>
     <select aria-label="पत्रकार फिल्टर" className={`${inputCls} bg-card`} value={reporter} onChange={e=>setReporter(e.target.value)}><option value="">सर्व पत्रकार</option>{reporters.map(p=><option key={p.id} value={p.id}>{p.name || p.id}</option>)}</select></div>
-    <div className="flex flex-wrap gap-2">{news.filter(n=>(filter==='all'||n.status===filter)&&(!reporter||n.reporterId===reporter)).map(n=><Button key={n.id} variant={selected===n.id?'default':'outline'} className="h-auto max-w-full whitespace-normal text-left" onClick={()=>{setSelected(n.id);setReason(n.feedback ?? '');}}>{n.headline}</Button>)}</div>
+    <div className="divide-y divide-glass-border">{filtered.map(n=><article key={n.id} className="space-y-2 py-3">
+      <h3 className="break-words font-semibold">{n.headline}</h3>
+      <p className="break-words text-xs text-muted-foreground">{reporters.find(p=>p.id===n.reporterId)?.name || n.reporterId} · {statusMeta[n.status].l} · {new Date(n.createdAt).toLocaleString('mr-IN')}</p>
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" variant={selected===n.id?'default':'outline'} disabled={busy} onClick={()=>{setSelected(n.id);setReason(n.feedback ?? '');}}><Eye className="size-4" />पोस्ट पाहा</Button>
+        {n.status!=='approved' && n.status!=='broadcasted' && <Button size="sm" disabled={busy} onClick={()=>void moderate('approved',n.id,n.id===selected?reason:'')}><CheckCircle2 className="size-4" />मंजूर व प्रकाशित</Button>}
+        {n.status!=='rejected' && <Button size="sm" variant="outline" disabled={busy} onClick={()=>void moderate('rejected',n.id,n.id===selected?reason:'')}><XCircle className="size-4" />नकार</Button>}
+      </div>
+    </article>)}{!filtered.length && <p className="py-4 text-sm text-muted-foreground">या फिल्टरमध्ये बातम्या नाहीत.</p>}</div>
     {current && <section className="space-y-3 border-y border-glass-border py-4">
       <h2 className="font-bold">{current.headline}</h2>
       <p className="break-words text-xs text-muted-foreground">पत्रकार: {reporters.find(p=>p.id===current.reporterId)?.name || current.reporterId} · {statusMeta[current.status].l} · {new Date(current.createdAt).toLocaleString('mr-IN')}</p>
