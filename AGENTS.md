@@ -36,6 +36,7 @@ use the editor.
 - Keep editorial assembly regions separate from administrative divisions and use their district IDs for public assembly filtering so regional totals and news selection stay consistent.
 - Use source-keyed NewsVideo for uploaded clip playback and previews, never sample posters; preserve clip identity on story changes and report media failures instead of showing unrelated imagery.
 - Render the shared Logo at the top-right of every full NewsVideo player, outside source-keyed media, so clip switches retain branding without obscuring thumbnail previews or controls.
+- Show the live Marathi date and ticking time under that Logo on every full video player and on the public video band, using the browser clock only so no paid service is called.
 - A single root auth subscription refreshes the browser store after identity changes; generation guards discard outdated refreshes, preventing stale private state after sign-out.
 - Publish account/profile readiness independently of feeds and clip signing, and reuse the loaded own profile in the editor so unrelated data cannot delay account access.
 - New accounts receive only journalist access; owner administrator access must be assigned to a verified, explicitly identified account, never the first signup.

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/ui/glass';
+import { LiveClock } from '@/components/LiveClock';
 
 export function NewsVideo({ src, label, className = 'aspect-video w-full', preview = false, autoPlay = false }: {
   src: string | undefined; label: string; className?: string; preview?: boolean; autoPlay?: boolean;
@@ -10,6 +11,7 @@ export function NewsVideo({ src, label, className = 'aspect-video w-full', previ
   return <div className={`relative overflow-hidden ${className}`}>
     <VideoSource key={src ?? 'missing'} src={src} label={label} className="block h-full w-full object-contain" preview={false} autoPlay={autoPlay} />
     <div aria-label="व्हिडिओवरील FOCUS 24 लोगो" className="pointer-events-none absolute right-2 top-2 z-10"><Logo size="sm" /></div>
+    <LiveClock className="absolute right-2 top-14 z-10" />
   </div>;
 }
 

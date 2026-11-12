@@ -11,6 +11,7 @@ import { hasPublishedBulletin, isPublished } from '@/lib/public-news';
 import { NewsVideo } from '@/components/NewsVideo';
 import { Button } from '@/components/ui/button';
 import { BreakingNewsBar } from './BreakingNewsBar';
+import { LiveClock } from '@/components/LiveClock';
 
 const tabs = ["Home", "Live TV", "महाराष्ट्र", "जिल्हे", "विधानसभा"] as const;
 const tiles = [
@@ -95,6 +96,7 @@ export function PublicApp() {
           <div className="relative overflow-hidden rounded-t-lg border border-primary/40">
             {liveUrl && /^https:\/\//.test(liveUrl) ? <video controls playsInline src={liveUrl} poster={IMAGES.studio} className="aspect-video w-full" /> : <img src={IMAGES.studio} alt="FOCUS 24 studio preview" className="aspect-video w-full object-cover" />}
             <div aria-label="व्हिडिओवरील FOCUS 24 लोगो" className="pointer-events-none absolute right-2 top-2 z-10"><Logo size="sm" /></div>
+            <LiveClock className="absolute right-2 top-14 z-10" />
             {!liveUrl && <div className="pointer-events-none absolute bottom-2 left-2"><Pill tone="gray">प्रसारण जोडलेले नाही</Pill></div>}
             <div className="pointer-events-none absolute top-2 left-2 max-w-[calc(100%-4.5rem)] bg-background/80 p-2 text-xs font-semibold break-words">
               {nowPlaying ? nowPlaying.headline : "FOCUS 24 NEWS मराठी"}
