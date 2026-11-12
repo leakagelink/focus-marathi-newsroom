@@ -10,8 +10,8 @@ it('scrolls all admin breaking headlines together and reflects edited data', () 
     { id: 'two', text: 'दुसरी बातमी', region: 'नांदेड', minutes: 30, createdAt: '2026-11-12T07:01:00Z' },
   ];
   const { rerender } = render(<BreakingNewsBar items={items} />);
-  expect(screen.getAllByText(items[0].text).length).toBeGreaterThan(0);
-  expect(screen.getAllByText(items[1].text).length).toBeGreaterThan(0);
-  rerender(<BreakingNewsBar items={[{ ...items[0], text: 'सुधारित बातमी' }]} />);
+  expect(screen.getAllByText(items[0]!.text).length).toBeGreaterThan(0);
+  expect(screen.getAllByText(items[1]!.text).length).toBeGreaterThan(0);
+  rerender(<BreakingNewsBar items={[{ ...items[0]!, text: 'सुधारित बातमी' }]} />);
   expect(screen.getAllByText('सुधारित बातमी').length).toBeGreaterThan(0);
 });
