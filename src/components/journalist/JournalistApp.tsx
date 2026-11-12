@@ -45,12 +45,12 @@ export function JournalistApp() {
   };
   return (
     <div className="flex min-h-full flex-col">
-      <div className="flex-1 space-y-3 px-3 pb-4">
-      <div className="flex items-center gap-2 py-1">
+      <header className="sticky top-0 z-40 flex shrink-0 items-center gap-2 border-b border-glass-border bg-background px-3 py-1">
         <button onClick={back} aria-label="मागें" title="मागें" className="glass grid size-8 shrink-0 place-items-center rounded-xl text-muted-foreground transition hover:border-primary/50 hover:text-foreground active:scale-95"><ArrowLeft className="size-4" /></button>
         <h2 className="flex-1 text-center font-bold">पत्रकार पोर्टल</h2>
         <span className="w-8" />
-      </div>
+      </header>
+      <div className="flex-1 space-y-3 px-3 pb-4">
       <Glass className="flex items-center gap-3 p-3">
         <UserRound className="size-10 text-neon" />
         <div className="flex-1 text-xs">

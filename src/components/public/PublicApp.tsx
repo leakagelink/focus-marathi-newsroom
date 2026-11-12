@@ -66,8 +66,7 @@ export function PublicApp() {
 
   return (
     <div className="relative flex min-h-full flex-col">
-      <div className="flex-1 pb-4">
-      <div className="flex items-center justify-between px-4 py-2">
+      <header className="sticky top-0 z-40 flex shrink-0 items-center justify-between border-b border-glass-border bg-background px-4 py-2">
         {tab !== "Home" || history.length > 0 ? (
           <button onClick={back} aria-label="मागें" title="मागें" className="glass grid size-8 shrink-0 place-items-center rounded-xl text-muted-foreground transition hover:border-primary/50 hover:text-foreground active:scale-95"><ArrowLeft className="size-4" /></button>
         ) : (
@@ -75,7 +74,8 @@ export function PublicApp() {
         )}
         <Logo size="sm" />
         <div className="flex gap-3"><Search className="size-5" /><Bell className="size-5" onClick={() => toast("🔔 सूचना चालू आहेत")} /></div>
-      </div>
+      </header>
+      <div className="flex-1 pb-4">
       <div className="flex gap-1.5 overflow-x-auto px-3 pb-2">
         {tabs.map((t) => (
           <button key={t} onClick={() => go(t)} className={`shrink-0 rounded-lg px-3 py-1 text-xs font-semibold ${tab === t ? "bg-primary text-primary-foreground" : "glass text-muted-foreground"}`}>{t}</button>
