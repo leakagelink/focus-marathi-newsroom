@@ -12,6 +12,7 @@ import { NewsVideo } from '@/components/NewsVideo';
 import { Button } from '@/components/ui/button';
 import { BreakingNewsBar } from './BreakingNewsBar';
 import { LiveClock } from '@/components/LiveClock';
+import { SPLASH_SLOGAN } from '@/lib/slogan';
 
 const tabs = ["Home", "Live TV", "महाराष्ट्र", "जिल्हे", "विधानसभा"] as const;
 const tiles = [
@@ -60,6 +61,7 @@ export function PublicApp() {
       <div className="absolute inset-0 bg-linear-to-b from-primary/40 via-background/60 to-background" />
       <div className="relative animate-in fade-in zoom-in-95 duration-700">
         <Logo size="lg" />
+        <p className="mt-4 px-6 text-base font-bold leading-snug text-neon">{SPLASH_SLOGAN}</p>
         <p className="mt-6 text-[11px] font-semibold tracking-[0.3em] text-muted-foreground">MAHARASHTRA'S<br />DIGITAL NEWS NETWORK</p>
         <p className="mt-10 px-8 text-lg font-semibold leading-relaxed">महाराष्ट्राच्या प्रत्येक विधानसभा क्षेत्राची बातमी, आता एका मंचावर...</p>
       </div>
