@@ -194,7 +194,7 @@ function Detail({ n, onBack, adName }: { n: NewsArticle; onBack: () => void; adN
         <span className="w-8" />
       </div>
       {hasVideo && <div>
-        <NewsVideo src={n.clipUrls?.[clipKeys[clip] ?? 'location']} label={`${n.headline} — ${labels[clip]}`} autoPlay className="aspect-video w-full rounded-t-lg object-contain" />
+        <NewsVideo src={n.clipUrls?.[clipKeys[clip] ?? 'location']} label={`${n.headline} — ${labels[clip]}`} autoPlay onEnded={() => setClip((clip + 1) % clipKeys.length)} className="aspect-video w-full rounded-t-lg object-contain" />
         <BreakingNewsBar items={breaking} />
       </div>}
       <h1 className="text-lg font-bold leading-snug">{n.headline}</h1>

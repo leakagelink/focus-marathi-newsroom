@@ -4,19 +4,19 @@ import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/ui/glass';
 import { LiveClock } from '@/components/LiveClock';
 
-export function NewsVideo({ src, label, className = 'aspect-video w-full', preview = false, autoPlay = false }: {
-  src: string | undefined; label: string; className?: string; preview?: boolean; autoPlay?: boolean;
+export function NewsVideo({ src, label, className = 'aspect-video w-full', preview = false, autoPlay = false, onEnded }: {
+  src: string | undefined; label: string; className?: string; preview?: boolean; autoPlay?: boolean; onEnded?: () => void;
 }) {
   if (preview) return <VideoSource key={src ?? 'missing'} src={src} label={label} className={className} preview autoPlay={autoPlay} />;
   return <div className={`relative overflow-hidden ${className}`}>
-    <VideoSource key={src ?? 'missing'} src={src} label={label} className="block h-full w-full object-contain" preview={false} autoPlay={autoPlay} />
+    <VideoSource key={src ?? 'missing'} src={src} label={label} className="block h-full w-full object-contain" preview={false} autoPlay={autoPlay} onEnded={onEnded} />
     <div aria-label="व्हिडिओवरील FOCUS 24 लोगो" className="pointer-events-none absolute right-2 top-2 z-10"><Logo size="sm" /></div>
     <LiveClock className="absolute right-2 top-14 z-10" />
   </div>;
 }
 
-function VideoSource({ src, label, className, preview, autoPlay }: {
-  src: string | undefined; label: string; className: string; preview: boolean; autoPlay: boolean;
+function VideoSource({ src, label, className, preview, autoPlay, onEnded }: {
+  src: string | undefined; label: string; className: string; preview: boolean; autoPlay: boolean; onEnded?: () => void;
 }) {
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -25,5 +25,5 @@ function VideoSource({ src, label, className, preview, autoPlay }: {
     <span>{src ? 'व्हिडिओ चालला नाही' : 'व्हिडिओ उपलब्ध नाही'}</span>
     {!preview && src && <><p>इंटरनेट तपासा. फाइल या उपकरणावर चालत नसेल तर MP4 (H.264/AAC) वापरा.</p><Button size="sm" variant="outline" onClick={() => { setFailed(false); setAttempt(n => n + 1); }}><RefreshCw className="size-4" />पुन्हा प्रयत्न करा</Button></>}
   </div>;
-  return <video key={attempt} aria-label={label} src={src} controls={!preview} autoPlay={autoPlay} muted playsInline preload={preview ? 'metadata' : 'auto'} onError={() => setFailed(true)} className={className} />;
+  return <video key={attempt} aria-label={label} src={src} controls={!preview} autoPlay={autoPlay} muted playsInline preload={preview ? 'metadata' : 'auto'} onEnded={onEnded} onError={() => setFailed(true)} className={className} />;
 }
