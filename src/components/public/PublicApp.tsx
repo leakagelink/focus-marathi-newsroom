@@ -1,3 +1,5 @@
+import { AdSlot } from '@/components/public/AdSlot';
+import type { Advertisement } from '@/types';
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Bell, Bookmark, Building2, CalendarDays, Clapperboard, Home, Landmark, MapPin, Megaphone, Mic, Play, Search, Share2, Tv, UserRound, Users, Zap } from "lucide-react";
 import { toast } from "sonner";
@@ -69,7 +71,7 @@ export function PublicApp() {
     </button>
   );
 
-  if (open && news.some(n=>n.id===open.id && isPublished(n.status))) return <Detail key={open.id} n={news.find(n=>n.id===open.id) ?? open} onBack={() => setOpen(null)} adName={ads[0]?.advertiser} />;
+  if (open && news.some(n=>n.id===open.id && isPublished(n.status))) return <Detail key={open.id} n={news.find(n=>n.id===open.id) ?? open} onBack={() => setOpen(null)} ads={ads} />;
 
   return (
     <div className="relative flex min-h-full flex-col">
@@ -106,6 +108,7 @@ export function PublicApp() {
           </div>
           <BreakingNewsBar items={breaking} />
           </div>
+          <AdSlot ads={ads} placement="home_top" />
           {tab === "Home" && (
             <div className="grid grid-cols-4 gap-2">
               {tiles.map((t) => (
@@ -116,7 +119,7 @@ export function PublicApp() {
               ))}
             </div>
           )}
-          {ads[0] && <Glass className="flex items-center justify-between p-2.5 text-xs"><span><Pill tone="amber">AD</Pill> {ads[0].advertiser}</span><span className="text-faint">प्रायोजित</span></Glass>}
+          <AdSlot ads={ads} placement="home_feed" />
           <List title="ताज्या बातम्या" items={live} onOpen={setOpen} />
         </div>
       )}
@@ -180,7 +183,7 @@ function List({ title, items, onOpen, showSeat }: { title: string; items: NewsAr
   );
 }
 
-function Detail({ n, onBack, adName }: { n: NewsArticle; onBack: () => void; adName?: string | undefined }) {
+function Detail({ n, onBack, ads }: { n: NewsArticle; onBack: () => void; ads: Advertisement[] }) {
   const [clip, setClip] = useState(0);
   const breaking = useStore(s => s.breaking);
   const hasVideo = Object.values(n.clips).some(Boolean);
@@ -196,6 +199,7 @@ function Detail({ n, onBack, adName }: { n: NewsArticle; onBack: () => void; adN
       {hasVideo && <div>
         <NewsVideo src={n.clipUrls?.[clipKeys[clip] ?? 'location']} label={`${n.headline} — ${labels[clip]}`} autoPlay onEnded={() => setClip((clip + 1) % clipKeys.length)} className="aspect-video w-full rounded-t-lg object-contain" />
         <BreakingNewsBar items={breaking} />
+        <AdSlot ads={ads} placement="detail_top" />
       </div>}
       <h1 className="text-lg font-bold leading-snug">{n.headline}</h1>
       {!hasVideo && <NewsAudio key={n.id} headline={n.headline} script={n.script} />}
@@ -212,7 +216,7 @@ function Detail({ n, onBack, adName }: { n: NewsArticle; onBack: () => void; adN
           </Button>
         ))}
       </div></>}
-      {adName && <Glass className="p-2 text-center text-xs"><Pill tone="amber">AD</Pill> {adName}</Glass>}
+      <AdSlot ads={ads} placement="detail_bottom" />
       <div className="flex gap-2">
         <button onClick={() => { navigator.clipboard?.writeText(`${n.headline} — FOCUS 24 NEWS`); toast("लिंक कॉपी केली"); }} className="glass flex flex-1 items-center justify-center gap-1 rounded-xl py-2 text-xs"><Share2 className="size-4" />Share</button>
         <button onClick={() => toast.success("बुकमार्क केले")} className="glass flex flex-1 items-center justify-center gap-1 rounded-xl py-2 text-xs"><Bookmark className="size-4" />Save</button>

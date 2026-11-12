@@ -110,7 +110,7 @@ export async function refreshCloud() {
     journalists:(profiles.data ?? []).map((p) => ({id:p.id,name:p.name,role:'पत्रकार',districtId:p.district_id,constituencyId:p.constituency,avatar:p.avatar,code:'',phone:p.phone,email:p.contact_email,rating:0,submitted:mapped.filter(n=>n.reporterId===p.id).length,approved:mapped.filter(n=>n.reporterId===p.id && ['approved','broadcasted'].includes(n.status)).length,status:'verified' as const})),
     content:(content.data ?? []).map(c=>({...c,data:c.data as Record<string,unknown>})),
     payments:(payments.data ?? []).map(p=>({id:p.id,journalistId:p.journalist_id,month:p.month,base:Number(p.amount),stories:0,exclusives:0,status:p.status==='paid'?'paid':'processing'})),
-    ads:(content.data ?? []).filter(c=>c.kind==='advertisement'&&c.active).map(c=>({id:c.id,advertiser:c.name,contact:'',type:'display',target:'',start:'',end:'',impressions:0,clicks:0,budget:0,paid:false,active:c.active,url:String((c.data as Record<string,unknown>)['url'] ?? '')})),
+    ads:(content.data ?? []).filter(c=>c.kind==='advertisement'&&c.active).map(c=>({id:c.id,advertiser:c.name,contact:'',type:'display',target:'',start:'',end:'',impressions:0,clicks:0,budget:0,paid:false,active:c.active,url:String((c.data as Record<string,unknown>)['url'] ?? ''),text:String((c.data as Record<string,unknown>)['text'] ?? ''),image:String((c.data as Record<string,unknown>)['image'] ?? ''),placement:String((c.data as Record<string,unknown>)['placement'] ?? 'home_feed'),size:String((c.data as Record<string,unknown>)['size'] ?? 'small')})),
     ...(settings.data?.data as Partial<Pick<State,'onAir'|'source'|'overlays'|'platforms'|'nowPlaying'|'bulletin'|'bulletinPublished'>> ?? {}),
   }));
 }

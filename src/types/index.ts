@@ -21,5 +21,6 @@ export interface BreakingNews { id: string; text: string; region: string; minute
 export interface Advertisement {
   id: string; advertiser: string; contact: string; type: string; target: string; start: string; end: string;
   impressions: number; clicks: number; budget: number; paid: boolean; active: boolean; url: string;
+  text?: string; image?: string; placement: string; size: string;
 }
 export interface Payment { id: string; journalistId: string; month: string; base: number; stories: number; exclusives: number; status: "paid" | "processing" }
