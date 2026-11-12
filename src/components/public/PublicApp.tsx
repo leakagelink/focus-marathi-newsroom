@@ -211,14 +211,6 @@ function Detail({ n, onBack, ads }: { n: NewsArticle; onBack: () => void; ads: A
         <Pill><CalendarDays className="size-3" />{new Date(n.createdAt).toLocaleString("mr-IN", { hour: "2-digit", minute: "2-digit" })}</Pill>
       </div>
       <p className="text-sm leading-relaxed text-muted-foreground">{n.script}</p>
-      {hasVideo && <><p className="text-xs font-semibold"><span className="text-neon">●</span> संबंधित व्हिडिओ</p>
-      <div className="grid grid-cols-4 gap-1.5">
-        {labels.map((l, i) => (
-          <Button key={l} variant="ghost" aria-pressed={clip===i} onClick={() => setClip(i)} className={`h-auto min-w-0 flex-col gap-1 p-0 text-[9px] ${clip === i ? "text-neon" : "text-muted-foreground"}`}>
-            <div className={`relative w-full overflow-hidden rounded-lg border ${clip === i ? "border-primary" : "border-glass-border"}`}><NewsVideo src={n.clipUrls?.[clipKeys[i] ?? 'location']} label={`${l} प्रिव्ह्यू`} preview className="aspect-square w-full object-cover" /><Play className="pointer-events-none absolute inset-0 m-auto size-5" /></div>{l}
-          </Button>
-        ))}
-      </div></>}
       <AdSlot ads={ads} placement="detail_bottom" />
       <div className="flex gap-2">
         <button onClick={() => { navigator.clipboard?.writeText(`${n.headline} — FOCUS 24 NEWS`); toast("लिंक कॉपी केली"); }} className="glass flex flex-1 items-center justify-center gap-1 rounded-xl py-2 text-xs"><Share2 className="size-4" />Share</button>
