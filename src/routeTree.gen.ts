@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as BroadcastRouteImport } from './routes/broadcast'
 import { Route as JournalistRouteImport } from './routes/journalist'
+import { Route as NewsIdRouteImport } from './routes/news.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -34,18 +35,25 @@ const JournalistRoute = JournalistRouteImport.update({
   path: '/journalist',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NewsIdRoute = NewsIdRouteImport.update({
+  id: '/news/$id',
+  path: '/news/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/broadcast': typeof BroadcastRoute
   '/journalist': typeof JournalistRoute
+  '/news/$id': typeof NewsIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/broadcast': typeof BroadcastRoute
   '/journalist': typeof JournalistRoute
+  '/news/$id': typeof NewsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,13 +61,14 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/broadcast': typeof BroadcastRoute
   '/journalist': typeof JournalistRoute
+  '/news/$id': typeof NewsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/broadcast' | '/journalist'
+  fullPaths: '/' | '/admin' | '/broadcast' | '/journalist' | '/news/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/broadcast' | '/journalist'
-  id: '__root__' | '/' | '/admin' | '/broadcast' | '/journalist'
+  to: '/' | '/admin' | '/broadcast' | '/journalist' | '/news/$id'
+  id: '__root__' | '/' | '/admin' | '/broadcast' | '/journalist' | '/news/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -67,6 +76,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   BroadcastRoute: typeof BroadcastRoute
   JournalistRoute: typeof JournalistRoute
+  NewsIdRoute: typeof NewsIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -99,6 +109,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof JournalistRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/news/$id': {
+      id: '/news/$id'
+      path: '/news/$id'
+      fullPath: '/news/$id'
+      preLoaderRoute: typeof NewsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -107,6 +124,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   BroadcastRoute: BroadcastRoute,
   JournalistRoute: JournalistRoute,
+  NewsIdRoute: NewsIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

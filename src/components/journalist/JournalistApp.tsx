@@ -5,7 +5,8 @@ import { toast } from "sonner";
 import { Glass, GlowButton, Logo, Pill, inputCls } from "@/components/ui/glass";
 import { actions, earnings, refreshCloud, useStore } from "@/lib/store";
 import { ASSEMBLY_REGIONS, CONSTITUENCIES, DISTRICTS, districtName } from "@/data/maharashtra";
-import { CATEGORIES, IMAGES } from "@/data/mock";
+import { CATEGORIES } from "@/data/mock";
+import { captureVideoFrame } from "@/lib/video-thumbnail";
 import type { Category, ClipType, NewsStatus } from "@/types";
 import { AccountForm } from '@/components/AccountForm';
 import { supabase } from '@/integrations/supabase/client';
@@ -105,6 +106,7 @@ function UploadForm({ onDone }: { onDone: () => void }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const pending = useRef<ClipType | null>(null);
   const uploading = useRef(new Set<ClipType>());
+  const thumb = useRef<string>('');
   const scriptStatus = getScriptWordStatus(script);
   const { words } = scriptStatus;
   const scriptMessage = scriptStatus.missing ? `आणखी ${scriptStatus.missing} शब्द जोडा (किमान 80 शब्द).` : scriptStatus.excess ? `${scriptStatus.excess} शब्द कमी करा (जास्तीत जास्त 100 शब्द).` : '';
@@ -124,6 +126,12 @@ function UploadForm({ onDone }: { onDone: () => void }) {
     if(signError || !data?.signedUrl) throw signError ?? new Error('व्हिडिओ प्रिव्ह्यू उपलब्ध नाही');
     paths.current[k]=path;
     setUrls(u=>({...u,[k]:data.signedUrl})); setProg(s=>({...s,[k]:100}));
+    if (k === 'location' || !thumb.current) void captureVideoFrame(file).then(async blob => {
+      if (!blob) return;
+      const tp = `${userId}/${crypto.randomUUID()}.jpg`;
+      const { error: te } = await supabase.storage.from('news-thumbs').upload(tp, blob, { contentType: 'image/jpeg' });
+      if (!te && (k === 'location' || !thumb.current)) thumb.current = tp;
+    });
     } catch(e) { setProg(s=>({...s,[k]:0})); toast.error(e instanceof Error ? e.message : 'व्हिडिओ अपलोड झाला नाही'); }
     finally { uploading.current.delete(k); }
   };
@@ -139,7 +147,7 @@ function UploadForm({ onDone }: { onDone: () => void }) {
     setBusy(true);
     try {
       const id = await actions.submitNews({ id:'', headline: headline.trim(), script: script.trim(), category: subCat || cat, districtId: district, constituency: seat, reporterId: userId ?? '', clipPaths:textOnly ? {} : paths.current,
-        createdAt: new Date().toISOString(), status: "pending", importance: "normal", image: IMAGES.farmer,
+        createdAt: new Date().toISOString(), status: "pending", importance: "normal", image: textOnly ? "" : thumb.current,
         clips: { location: !textOnly, anchor: !textOnly, byte1: !textOnly, byte2: !textOnly }, urgent: false, aiVoice: false, views: 0 });
       setDone(id);
     } catch(e) { toast.error(e instanceof Error ? e.message : 'अपलोड अयशस्वी'); }

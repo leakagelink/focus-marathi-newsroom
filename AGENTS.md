@@ -53,3 +53,4 @@ use the editor.
 - Ads live in app_content kind=advertisement with data.placement/size/image/text/url; uploaded images are paths in the private ad-images bucket (public buckets are blocked) signed on load; public AdSlot renders them per placement with a visible AD label.
 - Subcategories are app_content category rows with data.parent naming a main category; stories store the most specific name and parent filters include their subcategories.
 - News videos are never muted by default: play() is attempted with sound, and only if the browser blocks audible autoplay does the player fall back to muted with a one-tap sound button, so every clip plays with audio wherever autoplay is allowed.
+- Shared story links use /news/$id whose SSR head carries the story thumbnail; thumbnails are captured client-side from the uploaded clip into the private news-thumbs bucket (path in news.image), readable once the story is published.

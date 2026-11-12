@@ -1,3 +1,4 @@
+import { isThumbPath } from '@/lib/video-thumbnail';
 import { useRef, useSyncExternalStore } from "react";
 import { toast } from "sonner";
 
@@ -102,7 +103,9 @@ export async function refreshCloud() {
       const { data } = await supabase.storage.from('news-clips').createSignedUrl(path, 3600);
       if (data) clipUrls[key as import('@/types').ClipType] = data.signedUrl;
     }));
-    return { id:n.id, headline:n.headline, script:n.script, category:n.category as NewsArticle['category'], districtId:n.district_id, constituency:n.constituency, reporterId:n.reporter_id, createdAt:n.created_at, status:n.status as NewsStatus, importance:n.importance as NewsArticle['importance'], image:n.image || IMAGES.farmer, clips:{location:!!paths.location,anchor:!!paths.anchor,byte1:!!paths.byte1,byte2:!!paths.byte2}, clipPaths:paths, clipUrls, urgent:n.urgent, aiVoice:n.ai_voice, views:n.views, feedback:n.feedback ?? undefined };
+    let image = n.image;
+    if (isThumbPath(image)) { const { data } = await supabase.storage.from('news-thumbs').createSignedUrl(image, 3600); image = data?.signedUrl ?? ''; }
+    return { id:n.id, headline:n.headline, script:n.script, category:n.category as NewsArticle['category'], districtId:n.district_id, constituency:n.constituency, reporterId:n.reporter_id, createdAt:n.created_at, status:n.status as NewsStatus, importance:n.importance as NewsArticle['importance'], image:image || IMAGES.farmer, thumbPath:isThumbPath(n.image) ? n.image : undefined, clips:{location:!!paths.location,anchor:!!paths.anchor,byte1:!!paths.byte1,byte2:!!paths.byte2}, clipPaths:paths, clipUrls, urgent:n.urgent, aiVoice:n.ai_voice, views:n.views, feedback:n.feedback ?? undefined };
   }));
   const adImages: Record<string,string> = {};
   await Promise.all((content.data ?? []).filter(c=>c.kind==='advertisement').map(async c => {
@@ -140,7 +143,7 @@ export const actions = {
     if (!state.userId) throw new Error('लॉगिन करा');
     const input = submissionSchema.parse({ ...n, clipPaths:n.clipPaths });
     if (Object.values(input.clipPaths).some(p => !p?.startsWith(`${state.userId}/`))) throw new Error('अवैध क्लिप');
-    const {data,error} = await supabase.from('news').insert({reporter_id:state.userId,headline:input.headline,script:input.script,category:input.category,district_id:input.districtId,constituency:input.constituency,clip_paths:input.clipPaths,ai_voice:input.aiVoice}).select('id').single();
+    const {data,error} = await supabase.from('news').insert({reporter_id:state.userId,headline:input.headline,script:input.script,category:input.category,district_id:input.districtId,constituency:input.constituency,clip_paths:input.clipPaths,ai_voice:input.aiVoice,image:n.image && isThumbPath(n.image) && n.image.startsWith(`${state.userId}/`) ? n.image : ''}).select('id').single();
     if(error) throw error;
     await refreshCloud(); return data.id;
   },

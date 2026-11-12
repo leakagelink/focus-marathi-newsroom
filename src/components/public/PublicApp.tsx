@@ -27,8 +27,8 @@ const tiles = [
 
 const timeAgo = (iso: string) => { const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000); return m < 60 ? `${m} मिनिटांपूर्वी` : `${Math.round(m / 60)} तासांपूर्वी`; };
 
-export function PublicApp() {
-  const [splash, setSplash] = useState(true);
+export function PublicApp({ initialStoryId }: { initialStoryId?: string } = {}) {
+  const [splash, setSplash] = useState(!initialStoryId);
   const [tab, setTab] = useState<string>("Home");
   const [history, setHistory] = useState<string[]>([]);
   const [open, setOpen] = useState<NewsArticle | null>(null);
@@ -47,6 +47,7 @@ export function PublicApp() {
   const published = useStore((s) => s.bulletinPublished);
   const onAir = useStore(s => s.onAir);
   const nowPlaying = useStore((s) => s.news.find((n) => n.id === s.nowPlaying));
+  useEffect(() => { if (!initialStoryId) return; const found = news.find(n => n.id === initialStoryId); if (found) setOpen(o => o ?? found); }, [initialStoryId, news]);
   useEffect(() => { const t = setTimeout(() => setSplash(false), 1800); return () => clearTimeout(t); }, []);
 
   // In-app back stack: every screen opened from another one can be returned from.
@@ -196,7 +197,7 @@ function Detail({ n, onBack, ads }: { n: NewsArticle; onBack: () => void; ads: A
       <div className="sticky -top-px z-20 -mx-3 flex items-center gap-2 bg-background/90 px-3 py-2 backdrop-blur">
         <button onClick={onBack} aria-label="मागें" title="मागें" className="glass grid size-8 shrink-0 place-items-center rounded-xl text-muted-foreground transition hover:border-primary/50 hover:text-foreground active:scale-95"><ArrowLeft className="size-4" /></button>
         <h2 className="flex-1 text-center font-bold">बातमीचा तपशील</h2>
-        <span className="w-8" />
+        <ShareButton n={n} />
       </div>
       {hasVideo && <div>
         <NewsVideo src={n.clipUrls?.[clipKeys[clip] ?? 'location']} label={`${n.headline} — ${labels[clip]}`} autoPlay onEnded={() => setClip((clip + 1) % clipKeys.length)} className="aspect-video w-full rounded-t-lg object-contain" />
@@ -226,4 +227,15 @@ function Detail({ n, onBack, ads }: { n: NewsArticle; onBack: () => void; ads: A
       <button onClick={onBack} className="glass flex w-full items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-semibold text-muted-foreground transition hover:border-primary/50 hover:text-foreground active:scale-[0.98]"><ArrowLeft className="size-4" />मागें</button>
     </div>
   );
+}
+
+function ShareButton({ n }: { n: NewsArticle }) {
+  const share = async () => {
+    const url = `${window.location.origin}/news/${n.id}`;
+    try {
+      if (navigator.share) { await navigator.share({ title: n.headline, text: n.headline, url }); return; }
+      await navigator.clipboard.writeText(url); toast.success('बातमीची लिंक कॉपी झाली');
+    } catch { /* user cancelled */ }
+  };
+  return <button onClick={() => void share()} aria-label="बातमी शेअर करा" title="शेअर करा" className="glass grid size-8 shrink-0 place-items-center rounded-xl text-muted-foreground transition hover:border-primary/50 hover:text-foreground active:scale-95"><Share2 className="size-4" /></button>;
 }

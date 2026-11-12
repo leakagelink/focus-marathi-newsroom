@@ -14,7 +14,7 @@ export interface Journalist {
 }
 export interface NewsArticle {
   id: string; headline: string; script: string; category: Category; districtId: string; constituency: string;
-  reporterId: string; createdAt: string; status: NewsStatus; importance: Importance; image: string;
+  reporterId: string; createdAt: string; status: NewsStatus; importance: Importance; image: string; thumbPath?: string | undefined;
   clips: Record<ClipType, boolean>; clipUrls?: Partial<Record<ClipType, string>>; clipPaths?: Partial<Record<ClipType, string>>; urgent: boolean; feedback?: string | undefined; aiVoice: boolean; views: number;
 }
 export interface BreakingNews { id: string; text: string; region: string; minutes: number; createdAt: string }

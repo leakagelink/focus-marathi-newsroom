@@ -1,0 +1,2 @@
+CREATE POLICY news_thumbs_upload ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'news-thumbs' AND (storage.foldername(name))[1] = auth.uid()::text AND public.account_enabled(auth.uid()));
+CREATE POLICY news_thumbs_read ON storage.objects FOR SELECT TO anon, authenticated USING (bucket_id = 'news-thumbs' AND ((storage.foldername(name))[1] = auth.uid()::text OR public.is_editor() OR EXISTS (SELECT 1 FROM public.news WHERE status IN ('approved','broadcasted') AND image = name)));
