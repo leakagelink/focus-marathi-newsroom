@@ -1,4 +1,5 @@
 # Live backend
+- [ ] Correct uploaded-video previews and source identity across journalist, public and admin; verify real stored clips and automated playback regression checks.
 - [x] Show approval/rejection beside every journalist post without requiring detail selection; verified authenticated save/readback, anonymous publication and rejection visibility, mobile fit, and temporary test cleanup.
 - [x] Add canonical-domain Capacitor configuration, exact-host navigation tests and PowerShell sync/rebuild instructions after confirming the old published address redirects to the custom domain.
 - [ ] Verify startup and signed-in navigation on the rebuilt Android APK; requires the user's local Android project and phone, which are unavailable in this sandbox.

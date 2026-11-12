@@ -4,10 +4,12 @@ import { toast } from "sonner";
 import { Glass, LiveDot, Logo, Pill, Ticker } from "@/components/ui/glass";
 import { useStore } from "@/lib/store";
 import { DISTRICTS, districtName } from "@/data/maharashtra";
-import { IMAGES, SAMPLE_VIDEOS } from "@/data/mock";
+import { IMAGES } from "@/data/mock";
 import type { NewsArticle } from "@/types";
 import { NewsAudio } from './NewsAudio';
 import { hasPublishedBulletin, isPublished } from '@/lib/public-news';
+import { NewsVideo } from '@/components/NewsVideo';
+import { Button } from '@/components/ui/button';
 
 const tabs = ["Home", "Live TV", "महाराष्ट्र", "जिल्हे", "विधानसभा"] as const;
 const tiles = [
@@ -59,7 +61,7 @@ export function PublicApp() {
     </button>
   );
 
-  if (open && news.some(n=>n.id===open.id && isPublished(n.status))) return <Detail n={news.find(n=>n.id===open.id) ?? open} onBack={() => setOpen(null)} adName={ads[0]?.advertiser} />;
+  if (open && news.some(n=>n.id===open.id && isPublished(n.status))) return <Detail key={open.id} n={news.find(n=>n.id===open.id) ?? open} onBack={() => setOpen(null)} adName={ads[0]?.advertiser} />;
 
   return (
     <div className="relative flex min-h-full flex-col">
@@ -146,7 +148,7 @@ function List({ title, items, onOpen, showSeat }: { title: string; items: NewsAr
         {items.length === 0 && <p className="py-6 text-center text-xs text-faint">या भागात अजून बातम्या नाहीत</p>}
         {items.map((n) => (
           <button key={n.id} onClick={() => onOpen(n)} className="glass flex w-full gap-2.5 rounded-xl p-2 text-left transition hover:border-primary/50 animate-in fade-in slide-in-from-bottom-2">
-            <img src={n.image} alt="" loading="lazy" className="h-16 w-24 shrink-0 rounded-lg object-cover" />
+            {Object.values(n.clips).some(Boolean) ? <NewsVideo src={n.clipUrls?.location} label={`${n.headline} प्रिव्ह्यू`} preview className="h-16 w-24 shrink-0 rounded-lg object-cover" /> : <img src={n.image} alt="" loading="lazy" className="h-16 w-24 shrink-0 rounded-lg object-cover" />}
             <div className="min-w-0 flex-1">
               <p className="line-clamp-2 text-[13px] font-semibold leading-snug">{n.headline}</p>
               <p className="mt-1 text-[10px] text-faint">{districtName(n.districtId)}{showSeat && ` · ${n.constituency}`} | {timeAgo(n.createdAt)}</p>
@@ -162,7 +164,8 @@ function List({ title, items, onOpen, showSeat }: { title: string; items: NewsAr
 function Detail({ n, onBack, adName }: { n: NewsArticle; onBack: () => void; adName?: string | undefined }) {
   const [clip, setClip] = useState(0);
   const hasVideo = Object.values(n.clips).some(Boolean);
-  const labels = ["Location (10s)", "Anchoring (20s)", "First Byte (60s)", "Second Byte (60s)"];
+  const labels = ["Location", "Anchoring", "First Byte", "Second Byte"];
+  const clipKeys = ['location', 'anchor', 'byte1', 'byte2'] as const;
   return (
     <div className="space-y-3 px-3 pb-6 animate-in fade-in slide-in-from-right-4">
       <div className="sticky -top-px z-20 -mx-3 flex items-center gap-2 bg-background/90 px-3 py-2 backdrop-blur">
@@ -170,7 +173,7 @@ function Detail({ n, onBack, adName }: { n: NewsArticle; onBack: () => void; adN
         <h2 className="flex-1 text-center font-bold">बातमीचा तपशील</h2>
         <span className="w-8" />
       </div>
-      {hasVideo && <video key={clip} src={n.clipUrls?.[(['location','anchor','byte1','byte2'] as const)[clip] ?? 'location']} poster={n.image} controls autoPlay muted playsInline className="aspect-video w-full rounded-xl object-cover" />}
+      {hasVideo && <NewsVideo src={n.clipUrls?.[clipKeys[clip] ?? 'location']} label={`${n.headline} — ${labels[clip]}`} autoPlay className="aspect-video w-full rounded-lg object-contain" />}
       <h1 className="text-lg font-bold leading-snug">{n.headline}</h1>
       {!hasVideo && <NewsAudio key={n.id} headline={n.headline} script={n.script} />}
       <div className="flex flex-wrap gap-1.5 text-[11px]">
@@ -178,12 +181,12 @@ function Detail({ n, onBack, adName }: { n: NewsArticle; onBack: () => void; adN
         <Pill><CalendarDays className="size-3" />{new Date(n.createdAt).toLocaleString("mr-IN", { hour: "2-digit", minute: "2-digit" })}</Pill>
       </div>
       <p className="text-sm leading-relaxed text-muted-foreground">{n.script}</p>
-      {hasVideo && <><p className="text-xs font-semibold"><span className="text-neon">●</span> संबंधित व्हिडिओ (2:30 मिनिटे)</p>
+      {hasVideo && <><p className="text-xs font-semibold"><span className="text-neon">●</span> संबंधित व्हिडिओ</p>
       <div className="grid grid-cols-4 gap-1.5">
         {labels.map((l, i) => (
-          <button key={l} onClick={() => setClip(i)} className={`text-center text-[9px] ${clip === i ? "text-neon" : "text-muted-foreground"}`}>
-            <div className={`relative mb-1 overflow-hidden rounded-lg border ${clip === i ? "border-primary" : "border-glass-border"}`}><img src={n.image} alt="" className="aspect-square object-cover" /><Play className="absolute inset-0 m-auto size-5" /></div>{l}
-          </button>
+          <Button key={l} variant="ghost" aria-pressed={clip===i} onClick={() => setClip(i)} className={`h-auto min-w-0 flex-col gap-1 p-0 text-[9px] ${clip === i ? "text-neon" : "text-muted-foreground"}`}>
+            <div className={`relative w-full overflow-hidden rounded-lg border ${clip === i ? "border-primary" : "border-glass-border"}`}><NewsVideo src={n.clipUrls?.[clipKeys[i] ?? 'location']} label={`${l} प्रिव्ह्यू`} preview className="aspect-square w-full object-cover" /><Play className="pointer-events-none absolute inset-0 m-auto size-5" /></div>{l}
+          </Button>
         ))}
       </div></>}
       {adName && <Glass className="p-2 text-center text-xs"><Pill tone="amber">AD</Pill> {adName}</Glass>}

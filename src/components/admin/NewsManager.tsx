@@ -7,6 +7,7 @@ import { statusMeta } from '@/components/journalist/JournalistApp';
 import { toast } from 'sonner';
 import { inputCls } from '@/components/ui/glass';
 import { CheckCircle2, Eye, RefreshCw, XCircle } from 'lucide-react';
+import { NewsVideo } from '@/components/NewsVideo';
 
 export function NewsManager() {
   const news = useStore(s=>s.news);
@@ -41,7 +42,7 @@ export function NewsManager() {
       <h2 className="font-bold">{current.headline}</h2>
       <p className="break-words text-xs text-muted-foreground">पत्रकार: {reporters.find(p=>p.id===current.reporterId)?.name || current.reporterId} · {statusMeta[current.status].l} · {new Date(current.createdAt).toLocaleString('mr-IN')}</p>
       <p className="whitespace-pre-wrap text-sm">{current.script}</p>
-      <div className="grid gap-2 sm:grid-cols-2">{Object.entries(current.clipUrls ?? {}).map(([key,url])=><div key={key}><span className="text-xs">{key}</span><video controls playsInline src={url} className="aspect-video w-full" /></div>)}</div>
+      <div className="grid gap-2 sm:grid-cols-2">{Object.entries(current.clipPaths ?? {}).map(([key])=><div key={`${current.id}:${key}`}><span className="text-xs">{key}</span><NewsVideo src={current.clipUrls?.[key as keyof typeof current.clipUrls]} label={`${current.headline} — ${key}`} /></div>)}</div>
       <input className={inputCls} aria-label="संपादकाची टिप्पणी" placeholder="नकार / सुधारणेचे कारण" value={reason} onChange={e=>setReason(e.target.value)} />
       <div className="flex flex-wrap gap-2"><Button disabled={busy} onClick={()=>void moderate('approved')}>मंजूर व प्रकाशित</Button><Button disabled={busy} variant="outline" onClick={()=>void moderate('revision')}>सुधारणा मागवा</Button><Button disabled={busy} variant="outline" onClick={()=>void moderate('rejected')}>नकार</Button><Button disabled={busy} variant="outline" onClick={()=>void moderate('pending')}>प्रकाशन मागे घ्या</Button></div>
     </section>}

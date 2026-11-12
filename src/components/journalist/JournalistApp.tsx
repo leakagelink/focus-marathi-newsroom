@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Glass, GlowButton, Logo, Pill, inputCls } from "@/components/ui/glass";
 import { actions, earnings, refreshCloud, useStore } from "@/lib/store";
 import { CONSTITUENCIES, DISTRICTS, districtName } from "@/data/maharashtra";
-import { CATEGORIES, IMAGES, SAMPLE_VIDEOS } from "@/data/mock";
+import { CATEGORIES, IMAGES } from "@/data/mock";
 import type { Category, ClipType, NewsStatus } from "@/types";
 import { AccountForm } from '@/components/AccountForm';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,6 +12,7 @@ import { BackButton } from '@/components/BackButton';
 import { Button } from '@/components/ui/button';
 import { ProfileEditor } from './ProfileEditor';
 import { sampleNews } from '@/lib/sample-news';
+import { NewsVideo } from '@/components/NewsVideo';
 
 const CLIPS: { k: ClipType; t: string; d: string; sec: string }[] = [
   { k: "location", t: "Location Visual", d: "10 सेकंद", sec: "0:10" },
@@ -96,22 +97,31 @@ function UploadForm({ onDone }: { onDone: () => void }) {
   const [done, setDone] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const pending = useRef<ClipType | null>(null);
+  const uploading = useRef(new Set<ClipType>());
   const words = script.trim() ? script.trim().split(/\s+/).length : 0;
 
   const startUpload = async (k: ClipType, file: File) => {
-    if (!userId) return;
+    if (!userId || busy || uploading.current.has(k)) return;
     if (!file.type.startsWith('video/')) { toast.error('व्हिडिओ फाइल निवडा'); return; }
+    uploading.current.add(k);
+    delete paths.current[k];
+    setUrls(u => ({...u, [k]:undefined}));
     setProg(s => ({...s,[k]:1}));
+    try {
     const path = `${userId}/${crypto.randomUUID()}/${k}.${file.name.split('.').pop()?.replace(/[^a-zA-Z0-9]/g,'') || 'mp4'}`;
     const {error} = await supabase.storage.from('news-clips').upload(path,file,{contentType:file.type});
-    if(error) { setProg(s=>({...s,[k]:0})); toast.error(error.message); return; }
+    if(error) throw error;
+    const {data,error:signError} = await supabase.storage.from('news-clips').createSignedUrl(path,3600);
+    if(signError || !data?.signedUrl) throw signError ?? new Error('व्हिडिओ प्रिव्ह्यू उपलब्ध नाही');
     paths.current[k]=path;
-    const {data} = await supabase.storage.from('news-clips').createSignedUrl(path,3600);
-    setUrls(u=>({...u,[k]:data?.signedUrl})); setProg(s=>({...s,[k]:100}));
+    setUrls(u=>({...u,[k]:data.signedUrl})); setProg(s=>({...s,[k]:100}));
+    } catch(e) { setProg(s=>({...s,[k]:0})); toast.error(e instanceof Error ? e.message : 'व्हिडिओ अपलोड झाला नाही'); }
+    finally { uploading.current.delete(k); }
   };
   const pick = (k: ClipType) => { pending.current = k; fileRef.current?.click(); };
 
   const submit = async () => {
+    if (uploading.current.size) { toast.error('व्हिडिओ अपलोड पूर्ण होऊ द्या'); return; }
     const missing = CLIPS.filter((c) => prog[c.k] < 100);
     if (!textOnly && missing.length) { toast.error(`अनिवार्य क्लिप बाकी: ${missing.map((m) => m.t).join(", ")}`); return; }
     if (headline.trim().length < 10) { toast.error("कृपया बातमीचे शीर्षक टाका"); return; }
@@ -143,13 +153,10 @@ function UploadForm({ onDone }: { onDone: () => void }) {
               {p > 0 && p < 100 && <div className="mt-1 h-1 overflow-hidden rounded bg-glass"><div className="h-full bg-primary transition-all" style={{ width: `${p}%` }} /></div>}
             </div>
             {p >= 100 ? (
-              <button onClick={() => { const url=urls[c.k]; if(url) setPreview({ k:c.k,url }); }} className="relative">
-                <img src={IMAGES.farmer} alt="" className="h-11 w-16 rounded-md object-cover" /><Play className="absolute inset-0 m-auto size-4" />
-                <span className="absolute bottom-0 right-0 rounded bg-background/80 px-1 text-[8px]">▶ {c.sec}</span>
-              </button>
+              <div className="flex items-center gap-1"><Button variant="ghost" className="relative h-auto p-0" aria-label={`${c.t} प्रिव्ह्यू`} onClick={() => { const url=urls[c.k]; if(url) setPreview({ k:c.k,url }); }}><NewsVideo src={urls[c.k]} label={`${c.t} प्रिव्ह्यू`} preview className="h-11 w-16 rounded-md object-cover" /><Play className="pointer-events-none absolute inset-0 m-auto size-4" /></Button><Button size="icon" variant="ghost" title="व्हिडिओ बदला" aria-label={`${c.t} बदला`} disabled={busy} onClick={()=>pick(c.k)}><Upload className="size-4" /></Button></div>
             ) : (
               <div className="flex gap-1">
-                <button onClick={() => pick(c.k)} className="glass rounded-lg px-2 py-1.5 text-[10px]"><Upload className="inline size-3" /> फाइल</button>
+                <Button size="sm" variant="outline" disabled={busy || p>0} aria-label={`${c.t} फाइल`} onClick={() => pick(c.k)}><Upload className="size-3" /> फाइल</Button>
               </div>
             )}
             {p >= 100 && <CheckCircle2 className="size-5 text-success" />}
@@ -174,7 +181,7 @@ function UploadForm({ onDone }: { onDone: () => void }) {
           <span className={words > 100 ? "text-neon" : ""}>{words} / 100 शब्द · {script.length} अक्षरे</span>
         </div>
       </div>
-      <GlowButton className="w-full py-3 text-base" onClick={submit} disabled={busy}>
+      <GlowButton className="w-full py-3 text-base" onClick={submit} disabled={busy || Object.values(prog).some(p=>p>0 && p<100)}>
         {busy ? <Loader2 className="size-5 animate-spin" /> : <CloudUpload className="size-5" />}{busy ? "अपलोड होत आहे..." : "बातमी अपलोड करा"}
       </GlowButton>
 
@@ -182,7 +189,7 @@ function UploadForm({ onDone }: { onDone: () => void }) {
         <div className="fixed inset-0 z-40 grid place-items-center bg-background/80 p-4 backdrop-blur" onClick={() => setPreview(null)}>
           <Glass className="w-full p-2" onClick={(e) => e.stopPropagation()}>
             <div className="mb-1 flex justify-between px-1 text-xs"><span>प्रिव्ह्यू</span><X className="size-4 cursor-pointer" onClick={() => setPreview(null)} /></div>
-            <video src={preview.url} controls autoPlay muted className="w-full rounded-lg" />
+            <NewsVideo src={preview.url} label={`${preview.k} प्रिव्ह्यू`} autoPlay className="aspect-video w-full rounded-lg" />
           </Glass>
         </div>
       )}
