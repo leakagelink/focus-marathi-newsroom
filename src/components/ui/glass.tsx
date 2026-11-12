@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from "react";
-import logoAsset from '@/assets/focus-24-current-logo.png.asset.json';
+import logoAsset from '@/assets/focus-24-v3-logo.png.asset.json';
 
 export function Glass({ className, red, ...p }: HTMLAttributes<HTMLDivElement> & { red?: boolean | undefined }) {
   return <div className={cn(red ? "glass-red" : "glass", "rounded-2xl", className)} {...p} />;

@@ -5,7 +5,7 @@ import {
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Smartphone, UserRound, Monitor, Radio } from "lucide-react";
 import appCss from "../styles.css?url";
-import appleIcon from '@/assets/focus-24-current-apple-icon.png.asset.json';
+import appleIcon from '@/assets/focus-24-v3-apple-icon.png.asset.json';
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { Logo } from "@/components/ui/glass";
@@ -60,7 +60,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap" },
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.png?v=focus24-current", type: "image/png" },
+      { rel: "icon", href: "/favicon.png?v=focus24-v3", type: "image/png" },
       { rel: "apple-touch-icon", href: appleIcon.url },
       { rel: "manifest", href: "/manifest.webmanifest" },
     ],
