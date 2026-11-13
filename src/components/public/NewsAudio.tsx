@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Play, Pause, Square, Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { narrateNews } from '@/lib/news-tts.functions';
+import { requestMediaPause } from '@/lib/media-focus';
 
 // ElevenLabs Marathi narration for published stories (server-side key); device speech is the fallback.
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -12,6 +13,7 @@ export function NewsAudio({ id, headline, script }: { id?: string; headline: str
   useEffect(() => () => { audio.current?.pause(); audio.current = null; }, [id]);
   const useEleven = Boolean(id && UUID.test(id)) && !elFailed;
   const playEleven = async () => {
+    requestMediaPause();
     if (audio.current) { await audio.current.play().catch(() => {}); setEl('playing'); return; }
     setEl('loading'); setError('');
     try {
@@ -50,6 +52,7 @@ export function NewsAudio({ id, headline, script }: { id?: string; headline: str
 
   const play = () => {
     if (!voice || !supported) return;
+    requestMediaPause();
     const engine = window.speechSynthesis;
     setError('');
     if (status === 'paused') { engine.resume(); setStatus('playing'); return; }

@@ -3,6 +3,7 @@ import { AlertCircle, RefreshCw, Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/ui/glass';
 import { LiveClock } from '@/components/LiveClock';
+import { onMediaPauseRequest } from '@/lib/media-focus';
 
 export function NewsVideo({ src, label, className = 'aspect-video w-full', preview = false, autoPlay = false, onEnded }: {
   src: string | undefined; label: string; className?: string; preview?: boolean; autoPlay?: boolean; onEnded?: () => void;
@@ -33,6 +34,12 @@ function VideoSource({ src, label, className, preview, autoPlay, onEnded }: {
       void el.play().catch(() => {});
     });
   }, [autoPlay, attempt, src]);
+
+  // News narration starting must silence this player so the two never talk over each other.
+  useEffect(() => {
+    if (preview) return;
+    return onMediaPauseRequest(() => ref.current?.pause());
+  }, [preview, attempt, src]);
 
   if (!src || failed) return <div role={preview ? undefined : 'alert'} className={`${className} flex flex-col items-center justify-center gap-2 bg-card p-2 text-center text-xs text-muted-foreground`}>
     <AlertCircle className="size-5" />
