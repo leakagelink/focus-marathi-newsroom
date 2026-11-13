@@ -205,7 +205,7 @@ function Detail({ n, onBack, ads }: { n: NewsArticle; onBack: () => void; ads: A
         <AdSlot ads={ads} placement="detail_top" />
       </div>}
       <h1 className="text-lg font-bold leading-snug">{n.headline}</h1>
-      <NewsAudio key={n.id} id={n.id} headline={n.headline} script={n.script} />}
+      <NewsAudio key={n.id} id={n.id} headline={n.headline} script={n.script} />
       <div className="flex flex-wrap gap-1.5 text-[11px]">
         <Pill><MapPin className="size-3" />{districtName(n.districtId)}</Pill><Pill><Landmark className="size-3" />{n.constituency}</Pill>
         <Pill><CalendarDays className="size-3" />{new Date(n.createdAt).toLocaleString("mr-IN", { hour: "2-digit", minute: "2-digit" })}</Pill>
