@@ -78,6 +78,13 @@
       "when": 1794493791530,
       "tag": "0010_tighten_media_read_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1794572054220,
+      "tag": "0011_phone_otp_accounts",
+      "breakpoints": true
     }
   ]
 }

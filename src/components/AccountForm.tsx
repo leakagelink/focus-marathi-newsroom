@@ -4,6 +4,7 @@ import { Glass, GlowButton, Logo, inputCls } from '@/components/ui/glass';
 import { Button } from '@/components/ui/button';
 import { Mail, Smartphone } from 'lucide-react';
 import { normalizePhone } from '@/lib/phone-auth';
+import { sendPhoneOtp, verifyPhoneOtp } from '@/lib/phone-otp.functions';
 
 export function AccountForm() {
   const [signup, setSignup] = useState(false);
@@ -23,17 +24,15 @@ export function AccountForm() {
       if (method === 'phone') {
         if (sentTo) {
           if (!/^\d{6}$/.test(otp)) throw new Error('6 अंकी OTP टाका.');
-          const { error } = await supabase.auth.verifyOtp({ phone: sentTo, token: otp, type: 'sms' });
-          if (error) throw new Error('OTP चुकीचा किंवा कालबाह्य आहे. पुन्हा प्रयत्न करा.');
+          const r = await verifyPhoneOtp({ data: { phone: sentTo, code: otp, signup, name: name.trim() } });
+          if (!r.ok) throw new Error(r.error);
+          const { error } = await supabase.auth.setSession({ access_token: r.access_token, refresh_token: r.refresh_token });
+          if (error) throw new Error('लॉगिन अयशस्वी');
         } else {
           const normalized = normalizePhone(phone);
           if (!normalized) throw new Error('योग्य मोबाईल क्रमांक टाका. भारतासाठी 10 अंक; इतर देशांसाठी +देशकोड वापरा.');
-          const { error } = await supabase.auth.signInWithOtp({ phone: normalized, options: { shouldCreateUser: signup, ...(signup ? { data: { name: name.trim() } } : {}) } });
-          if (error) {
-            const lower = error.message.toLowerCase();
-            if (lower.includes('disabled') || lower.includes('provider') || lower.includes('configuration')) throw new Error('मोबाईल OTP सेवा अजून सुरू नाही. सध्या ईमेलने खाते तयार करा किंवा लॉगिन करा.');
-            throw new Error('OTP पाठवता आला नाही. क्रमांक व खाते तपासा किंवा थोड्या वेळाने पुन्हा प्रयत्न करा.');
-          }
+          const r = await sendPhoneOtp({ data: { phone: normalized, signup } });
+          if (!r.ok) throw new Error(r.error);
           setSentTo(normalized); setResendAt(Date.now()+60000); setMessage('मोबाईलवर पाठवलेला OTP टाका.');
         }
         return;
@@ -50,8 +49,8 @@ export function AccountForm() {
     if(Date.now()<resendAt) {setMessage('OTP पुन्हा पाठवण्यासाठी एक मिनिट थांबा.');return;}
     setBusy(true);
     try {
-      const {error}=await supabase.auth.signInWithOtp({phone:sentTo,options:{shouldCreateUser:signup,...(signup?{data:{name:name.trim()}}:{})}});
-      if(error) throw new Error('OTP पुन्हा पाठवता आला नाही. थोड्या वेळाने प्रयत्न करा.');
+      const r=await sendPhoneOtp({data:{phone:sentTo,signup}});
+      if(!r.ok) throw new Error(r.error);
       setResendAt(Date.now()+60000);setMessage('नवीन OTP पाठवला.');
     } catch(e) {setMessage(e instanceof Error?e.message:'OTP पाठवता आला नाही.');}
     finally {setBusy(false);}
