@@ -3,8 +3,8 @@
   "appName": "FOCUS 24 NEWS",
   "webDir": "www",
   "server": {
-    "url": "https://news.homemuse.in",
+    "url": "https://focus24news.in",
     "cleartext": false,
-    "allowNavigation": ["news.homemuse.in"]
+    "allowNavigation": ["focus24news.in", "www.focus24news.in"]
   }
 }
