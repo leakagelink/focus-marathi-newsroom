@@ -15,7 +15,8 @@ export const getSharedNews = createServerFn({ method: 'GET' })
     if (!n) return null;
     let image = n.image ?? '';
     if (image && !/^https?:/.test(image)) {
-      const { data: s } = await sb.storage.from('news-thumbs').createSignedUrl(image, 60 * 60 * 24 * 365);
+      const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
+      const { data: s } = await supabaseAdmin.storage.from('news-thumbs').createSignedUrl(image, 60 * 60 * 24 * 365);
       image = s?.signedUrl ?? '';
     }
     return { id: n.id, headline: n.headline, description: n.script.split(/\s+/).slice(0, 30).join(' ') + '…', image };

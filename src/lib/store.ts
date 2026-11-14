@@ -95,6 +95,10 @@ export async function refreshCloud() {
   ]);
   if (version !== refreshVersion) return;
   if (news.error || breaking.error || settings.error) { toast.error('डेटा लोड झाला नाही. पुन्हा प्रयत्न करा.'); return; }
+  const publicSigned: Record<string,string> = await import('./public-media.functions').then(m => m.signPublicMedia({ data: {
+    thumbs: (news.data ?? []).filter(n => isThumbPath(n.image) && ['approved','broadcasted'].includes(n.status)).map(n => n.image),
+    ads: (content.data ?? []).filter(c => c.kind==='advertisement' && c.active).map(c => String((c.data as Record<string,unknown>)['image'] ?? '')).filter(i => i && !/^https?:\/\//.test(i)),
+  } })).catch(() => ({}));
   const mapped: NewsArticle[] = await Promise.all((news.data ?? []).map(async (n) => {
     const paths = n.clip_paths as Partial<Record<import('@/types').ClipType, string>>;
     const clipUrls: Partial<Record<import('@/types').ClipType, string>> = {};
@@ -104,15 +108,14 @@ export async function refreshCloud() {
       if (data) clipUrls[key as import('@/types').ClipType] = data.signedUrl;
     }));
     let image = n.image;
-    if (isThumbPath(image)) { const { data } = await supabase.storage.from('news-thumbs').createSignedUrl(image, 3600); image = data?.signedUrl ?? ''; }
+    if (isThumbPath(image)) { image = publicSigned[`t:${image}`] ?? (await supabase.storage.from('news-thumbs').createSignedUrl(image, 3600)).data?.signedUrl ?? ''; }
     return { id:n.id, headline:n.headline, script:n.script, category:n.category as NewsArticle['category'], districtId:n.district_id, constituency:n.constituency, reporterId:n.reporter_id, createdAt:n.created_at, status:n.status as NewsStatus, importance:n.importance as NewsArticle['importance'], image:image || IMAGES.farmer, thumbPath:isThumbPath(n.image) ? n.image : undefined, clips:{location:!!paths.location,anchor:!!paths.anchor,byte1:!!paths.byte1,byte2:!!paths.byte2}, clipPaths:paths, clipUrls, urgent:n.urgent, aiVoice:n.ai_voice, views:n.views, feedback:n.feedback ?? undefined };
   }));
   const adImages: Record<string,string> = {};
   await Promise.all((content.data ?? []).filter(c=>c.kind==='advertisement').map(async c => {
     const img = String((c.data as Record<string,unknown>)['image'] ?? '');
     if (!img || /^https?:\/\//.test(img)) { adImages[c.id] = img; return; }
-    const { data } = await supabase.storage.from('ad-images').createSignedUrl(img, 60*60*24*7);
-    adImages[c.id] = data?.signedUrl ?? '';
+    adImages[c.id] = publicSigned[`a:${img}`] ?? (await supabase.storage.from('ad-images').createSignedUrl(img, 3600)).data?.signedUrl ?? '';
   }));
   if (version !== refreshVersion) return;
   set(() => ({ userId:user?.id ?? null, ready:true, role, news:mapped,

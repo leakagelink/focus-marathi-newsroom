@@ -85,6 +85,13 @@
       "when": 1794572054220,
       "tag": "0011_phone_otp_accounts",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1794641626904,
+      "tag": "0012_remove_public_media_read_policies",
+      "breakpoints": true
     }
   ]
 }
